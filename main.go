@@ -13,6 +13,7 @@ import (
 
 // https://docs.github.com/en/rest/activity/starring?apiVersion=2022-11-28#alternative-response-with-star-creation-timestamps
 // https://docs.github.com/en/rest/metrics/statistics?apiVersion=2022-11-28
+// https://api.github.com/repos/kubernetes/kubernetes/releases
 
 func main() {
 	client := github.NewClient(nil)
