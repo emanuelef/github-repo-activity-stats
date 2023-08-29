@@ -23,6 +23,7 @@ type GoRepo struct {
 }
 
 type RepoStats struct {
+	GHPath        string
 	Stars         float64
 	Language      string
 	OpenIssues    float64
@@ -34,6 +35,7 @@ type RepoStats struct {
 
 func (rs RepoStats) String() string {
 	return fmt.Sprintf(`
+Path: %s,
 Stars: %d
 Language: %s
 Open Issues: %d
@@ -41,8 +43,9 @@ Forks: %d
 Archived: %t
 Default Branch: %s
 Go version: %s
-Direct dependencies: %d
-	`, int(rs.Stars),
+Go Direct dependencies: %d
+	`, rs.GHPath,
+		int(rs.Stars),
 		rs.Language,
 		int(rs.OpenIssues),
 		int(rs.Forks),
@@ -68,6 +71,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 	_, _ = restyReq.Get(apiGithubUrl)
 
 	result := RepoStats{
+		GHPath:        ghRepo,
 		Stars:         res["stargazers_count"].(float64),
 		Language:      res["language"].(string),
 		OpenIssues:    res["open_issues_count"].(float64),
@@ -93,7 +97,6 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 			for _, req := range f.Require {
 				// only direct dependencies
 				if !req.Indirect {
-					// fmt.Printf("%s\n", req.Mod.Path)
 					directDeps = append(directDeps, req.Mod.Path)
 				}
 			}

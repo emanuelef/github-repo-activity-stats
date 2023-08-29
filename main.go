@@ -31,6 +31,13 @@ func main() {
 
 	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
 	client := repostats.NewClient(&oauthClient.Transport)
+
 	result, _ := client.GetAllStats(ghRepo)
+	fmt.Println(result)
+
+	result, _ = client.GetAllStats("envoyproxy/envoy")
+	fmt.Println(result)
+
+	result, _ = client.GetAllStats("fluent/fluentd")
 	fmt.Println(result)
 }
