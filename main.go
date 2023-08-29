@@ -18,6 +18,8 @@ import (
 
 const ghRepo = "kubernetes/kubernetes"
 
+// const ghRepo = "keptn/keptn" // no root go.mod
+
 func main() {
 	c := resty.New()
 
@@ -30,6 +32,7 @@ func main() {
 	_, _ = restyReq.Get(apiGithubUrl)
 
 	fmt.Println("Stars:", res["stargazers_count"])
+	fmt.Println("Language:", res["language"])
 	fmt.Println("Open Issues:", res["open_issues_count"])
 	fmt.Println("Forks:", res["forks_count"])
 	fmt.Println("Archived:", res["archived"])
