@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-resty/resty/v2"
+	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/oauth2"
 )
 
 // https://api.github.com/repos/jasonrudolph/keyboard
@@ -20,12 +24,22 @@ const ghRepo = "kubernetes/kubernetes"
 
 // const ghRepo = "keptn/keptn" // no root go.mod
 
+type TokenSource struct {
+	AccessToken string
+}
+
 func main() {
-	c := resty.New()
+	tokenSource := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("PAT")},
+	)
+
+	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
+	restyClient := resty.New()
+	restyClient.SetTransport(oauthClient.Transport)
 
 	res := make(map[string]any)
 
-	restyReq := c.R().SetResult(&res)
+	restyReq := restyClient.R().SetResult(&res)
 
 	apiGithubUrl := fmt.Sprintf("https://api.github.com/repos/%s", ghRepo)
 
@@ -39,7 +53,7 @@ func main() {
 	fmt.Println("Default branch:", res["default_branch"])
 
 	goModUrl := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/go.mod", ghRepo, res["default_branch"])
-	resp, err := c.R().Get(goModUrl)
+	resp, err := restyClient.R().Get(goModUrl)
 
 	if err == nil {
 		f, err := modfile.Parse("go.mod", resp.Body(), nil)
