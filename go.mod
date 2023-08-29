@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v54 v54.0.0
+	golang.org/x/mod v0.12.0
 )
 
 require (
