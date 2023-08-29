@@ -40,4 +40,10 @@ func main() {
 
 	result, _ = client.GetAllStats("fluent/fluentd")
 	fmt.Println(result)
+
+	result, _ = client.GetAllStats("emanuelef/github-repo-activity-stats")
+	fmt.Println(result)
+
+	result, _ = client.GetAllStats("projectriff/riff")
+	fmt.Println(result)
 }

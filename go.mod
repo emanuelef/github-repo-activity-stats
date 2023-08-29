@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	golang.org/x/mod v0.12.0
 	golang.org/x/oauth2 v0.11.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

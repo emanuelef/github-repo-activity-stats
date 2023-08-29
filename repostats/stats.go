@@ -35,7 +35,7 @@ type RepoStats struct {
 
 func (rs RepoStats) String() string {
 	return fmt.Sprintf(`
-Path: %s,
+GH Repo: %s
 Stars: %d
 Language: %s
 Open Issues: %d
@@ -70,10 +70,15 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	_, _ = restyReq.Get(apiGithubUrl)
 
+	language, ok := res["language"].(string)
+	if !ok {
+		language = ""
+	}
+
 	result := RepoStats{
 		GHPath:        ghRepo,
 		Stars:         res["stargazers_count"].(float64),
-		Language:      res["language"].(string),
+		Language:      language,
 		OpenIssues:    res["open_issues_count"].(float64),
 		Forks:         res["forks_count"].(float64),
 		Archived:      res["archived"].(bool),
