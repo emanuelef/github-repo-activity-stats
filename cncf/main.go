@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
 	"github.com/go-resty/resty/v2"
@@ -25,6 +27,26 @@ type T struct {
 }
 
 func main() {
+	currentTime := time.Now()
+	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", currentTime.Format("2006-01-02")))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer outputFile.Close()
+
+	csvWriter := csv.NewWriter(outputFile)
+	defer csvWriter.Flush()
+
+	headerRow := []string{
+		"repo", "stars",
+		"language",
+		"archived", "dependencies",
+		"status",
+	}
+
+	csvWriter.Write(headerRow)
+
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("PAT")},
 	)
@@ -48,6 +70,16 @@ func main() {
 			if p["status"].(string) != "-" {
 				result, _ := client.GetAllStats(p["main_repo"].(string))
 				fmt.Println(result)
+
+				csvWriter.Write([]string{
+					fmt.Sprintf("%s", p["main_repo"]),
+					fmt.Sprintf("%d", result.Stars),
+					result.Language,
+					fmt.Sprintf("%t", result.Archived),
+					fmt.Sprintf("%d", len(result.DirectDeps)),
+					fmt.Sprintf("%s", p["status"]),
+				})
+
 			}
 		}
 	}

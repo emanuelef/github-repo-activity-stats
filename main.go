@@ -44,6 +44,6 @@ func main() {
 	result, _ = client.GetAllStats("emanuelef/github-repo-activity-stats")
 	fmt.Println(result)
 
-	result, _ = client.GetAllStats("projectriff/riff")
+	result, _ = client.GetAllStats("keptn/keptn")
 	fmt.Println(result)
 }

@@ -24,10 +24,10 @@ type GoRepo struct {
 
 type RepoStats struct {
 	GHPath        string
-	Stars         float64
+	Stars         int
 	Language      string
-	OpenIssues    float64
-	Forks         float64
+	OpenIssues    int
+	Forks         int
 	Archived      bool
 	DefaultBranch string
 	GoRepo
@@ -77,10 +77,10 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	result := RepoStats{
 		GHPath:        ghRepo,
-		Stars:         res["stargazers_count"].(float64),
+		Stars:         int(res["stargazers_count"].(float64)),
 		Language:      language,
-		OpenIssues:    res["open_issues_count"].(float64),
-		Forks:         res["forks_count"].(float64),
+		OpenIssues:    int(res["open_issues_count"].(float64)),
+		Forks:         int(res["forks_count"].(float64)),
 		Archived:      res["archived"].(bool),
 		DefaultBranch: res["default_branch"].(string),
 	}
@@ -93,7 +93,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 		if err == nil {
 			f, err := modfile.Parse("go.mod", resp.Body(), nil)
 			if err != nil {
-				return nil, err
+				return &result, nil
 			}
 			result.GoVersion = f.Go.Version
 
