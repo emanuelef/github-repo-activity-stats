@@ -1,2 +1,31 @@
 .env
 *.csv
+.vscode
+.DS_Store
+.idea
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+*.tmp
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Misc
+*.fiber.gz
+*.fasthttp.gz
+*.pprof
+*.workspace
+
+# Dependencies
+/vendor/
+vendor/
+vendor
+/Godeps/
