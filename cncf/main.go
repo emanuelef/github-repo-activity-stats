@@ -26,9 +26,37 @@ type T struct {
 	}
 }
 
+func writeGoDepsMapFile(deps map[string]int) {
+	currentTime := time.Now()
+	outputFile, err := os.Create(fmt.Sprintf("dep-repo-%s.csv", currentTime.Format("02-01-2006")))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer outputFile.Close()
+
+	csvWriter := csv.NewWriter(outputFile)
+	defer csvWriter.Flush()
+
+	headerRow := []string{
+		"dep", "go_cncf_repos_using_dep",
+	}
+
+	csvWriter.Write(headerRow)
+
+	for k, v := range deps {
+		if v > 20 {
+			csvWriter.Write([]string{
+				k,
+				fmt.Sprintf("%d", v),
+			})
+		}
+	}
+}
+
 func main() {
 	currentTime := time.Now()
-	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", currentTime.Format("2006-01-02")))
+	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", currentTime.Format("02-01-2006")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +74,8 @@ func main() {
 	}
 
 	csvWriter.Write(headerRow)
+
+	depsUse := map[string]int{}
 
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("PAT")},
@@ -80,7 +110,17 @@ func main() {
 					fmt.Sprintf("%s", p["status"]),
 				})
 
+				if len(result.DirectDeps) > 0 {
+					for _, dep := range result.DirectDeps {
+						if _, ok := depsUse[dep]; ok {
+							depsUse[dep] += 1
+						} else {
+							depsUse[dep] = 1
+						}
+					}
+				}
 			}
 		}
+		writeGoDepsMapFile(depsUse)
 	}
 }
