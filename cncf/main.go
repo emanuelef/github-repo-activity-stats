@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/semaphore"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,6 +57,10 @@ func writeGoDepsMapFile(deps map[string]int) {
 }
 
 func main() {
+	var mutex sync.Mutex
+	sem := semaphore.NewWeighted(10)
+	var wg sync.WaitGroup
+
 	currentTime := time.Now()
 	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", currentTime.Format("02-01-2006")))
 	if err != nil {
@@ -67,7 +73,7 @@ func main() {
 	defer csvWriter.Flush()
 
 	headerRow := []string{
-		"repo", "stars",
+		"repo", "stars", "new-stars-last-30d",
 		"language",
 		"archived", "dependencies",
 		"status",
@@ -94,33 +100,51 @@ func main() {
 			log.Fatalf("error: %v", err)
 		}
 
+		ctx := context.Background()
+
 		for key, val := range m["projects"].(map[string]any) {
-			p := val.(map[string]any)
-			fmt.Printf("%s %s %s\n", key, p["main_repo"], p["status"])
-			if p["status"].(string) != "-" {
-				result, _ := client.GetAllStats(p["main_repo"].(string))
-				fmt.Println(result)
+			wg.Add(1)
 
-				csvWriter.Write([]string{
-					fmt.Sprintf("%s", p["main_repo"]),
-					fmt.Sprintf("%d", result.Stars),
-					result.Language,
-					fmt.Sprintf("%t", result.Archived),
-					fmt.Sprintf("%d", len(result.DirectDeps)),
-					fmt.Sprintf("%s", p["status"]),
-				})
+			go func(key string, val any) {
+				sem.Acquire(ctx, 1)
+				defer sem.Release(1)
+				defer wg.Done()
+				p := val.(map[string]any)
+				fmt.Printf("%s %s %s\n", key, p["main_repo"], p["status"])
+				if p["status"].(string) != "-" {
+					log.Println("Getting stats")
+					result, _ := client.GetAllStats(p["main_repo"].(string))
+					log.Println("Got stats")
+					fmt.Println(result)
 
-				if len(result.DirectDeps) > 0 {
-					for _, dep := range result.DirectDeps {
-						if _, ok := depsUse[dep]; ok {
-							depsUse[dep] += 1
-						} else {
-							depsUse[dep] = 1
+					mutex.Lock()
+					csvWriter.Write([]string{
+						fmt.Sprintf("%s", p["main_repo"]),
+						fmt.Sprintf("%d", result.Stars),
+						fmt.Sprintf("%d", result.AddedLast30d),
+						result.Language,
+						fmt.Sprintf("%t", result.Archived),
+						fmt.Sprintf("%d", len(result.DirectDeps)),
+						fmt.Sprintf("%s", p["status"]),
+					})
+
+					if len(result.DirectDeps) > 0 {
+						for _, dep := range result.DirectDeps {
+							if _, ok := depsUse[dep]; ok {
+								depsUse[dep] += 1
+							} else {
+								depsUse[dep] = 1
+							}
 						}
 					}
+					mutex.Unlock()
 				}
-			}
+			}(key, val)
 		}
+		wg.Wait()
 		writeGoDepsMapFile(depsUse)
 	}
+
+	elapsed := time.Since(currentTime)
+	log.Printf("Took %s", elapsed)
 }

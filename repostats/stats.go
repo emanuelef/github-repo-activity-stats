@@ -99,65 +99,77 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 	result := StarsHistory{}
 
 	res := [](map[string]any){}
-	restyReq := c.restyClient.R().SetResult(&res)
+	restyReq := c.restyClient.R().SetResult(&res).SetHeader("Accept", "application/vnd.github.star+json")
 	apiGithubUrl := fmt.Sprintf("%s/repos/%s/stargazers", apiGHUrl, ghRepo)
 
+	// The stargazer endpoint allows only to reach page 400, and a maximum 100 results per page
+	// It also doesn't seem to support sorting in reverse order
+
 	perPage := strconv.Itoa(100)
-	page := strconv.Itoa((totalStars / 100) + 1)
+	page := (totalStars / 100) + 1
 
-	resp, err := restyReq.
-		SetQueryParams(map[string]string{
-			"page":     page,
-			"per_page": perPage,
-		}).
-		SetHeader("Accept", "application/vnd.github.star+json").Get(apiGithubUrl)
+	for i := 0; i < 2; i++ {
 
-	log.Println(resp.Status())
+		currentPage := page - i
 
-	if resp.StatusCode() == http.StatusUnprocessableEntity {
-		log.Println("Request over limit")
-	}
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	if resp.IsSuccess() {
-		if len(res) == 0 {
-			log.Println("No stars")
-			return result, nil
+		if currentPage < 0 {
+			break
 		}
 
-		result.LastStarDate, _ = time.Parse(time.RFC3339, res[0]["starred_at"].(string))
+		resp, err := restyReq.
+			SetQueryParams(map[string]string{
+				"page":     strconv.Itoa(currentPage),
+				"per_page": perPage,
+			}).Get(apiGithubUrl)
 
-		currentTime := time.Now()
+		log.Println(resp.Status())
 
-		slices.Reverse(res)
-		for _, star := range res {
-			// "2023-08-23T15:06:33Z"
-			dateString := star["starred_at"].(string)
-			output, err := time.Parse(time.RFC3339, dateString)
-			if err == nil {
-				days := currentTime.Sub(output).Hours()
+		if resp.StatusCode() == http.StatusUnprocessableEntity {
+			log.Println("Request over limit")
+		}
 
-				if days < 1 {
-					result.AddedLast24H += 1
-				}
+		if err != nil {
+			log.Println(err)
+		}
 
-				if days < 7 {
-					result.AddedLast7d += 1
-				}
+		if resp.IsSuccess() {
+			if len(res) == 0 {
+				log.Println("No stars")
+				return result, nil
+			}
 
-				if days < 14 {
-					result.AddedLast14d += 1
-				}
+			result.LastStarDate, _ = time.Parse(time.RFC3339, res[0]["starred_at"].(string))
 
-				if days < 30 {
-					result.AddedLast30d += 1
+			currentTime := time.Now()
+
+			slices.Reverse(res)
+			for _, star := range res {
+				// "2023-08-23T15:06:33Z"
+				dateString := star["starred_at"].(string)
+				output, err := time.Parse(time.RFC3339, dateString)
+				if err == nil {
+					days := currentTime.Sub(output).Hours()
+
+					if days < 1 {
+						result.AddedLast24H += 1
+					}
+
+					if days < 7 {
+						result.AddedLast7d += 1
+					}
+
+					if days < 14 {
+						result.AddedLast14d += 1
+					}
+
+					if days < 30 {
+						result.AddedLast30d += 1
+					}
 				}
 			}
 		}
 	}
+
 	return result, nil
 }
 
@@ -167,7 +179,10 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	apiGithubUrl := fmt.Sprintf("%s/repos/%s", apiGHUrl, ghRepo)
 
-	_, _ = restyReq.Get(apiGithubUrl)
+	_, err := restyReq.Get(apiGithubUrl)
+	if err != nil {
+		return nil, err
+	}
 
 	language, ok := res["language"].(string)
 	if !ok {
