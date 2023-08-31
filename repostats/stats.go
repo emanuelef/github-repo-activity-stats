@@ -49,6 +49,7 @@ AddedLast30d: %d`, sh.LastStarDate,
 type RepoStats struct {
 	GHPath        string
 	Stars         int
+	Size          int
 	Language      string
 	OpenIssues    int
 	Forks         int
@@ -62,6 +63,7 @@ func (rs RepoStats) String() string {
 	return fmt.Sprintf(`
 GH Repo: %s
 Stars: %d
+Size: %d
 Language: %s
 Open Issues: %d
 Forks: %d
@@ -71,10 +73,11 @@ Default Branch: %s
 Go version: %s
 Go Direct dependencies: %d
 	`, rs.GHPath,
-		int(rs.Stars),
+		rs.Stars,
+		rs.Size,
 		rs.Language,
-		int(rs.OpenIssues),
-		int(rs.Forks),
+		rs.OpenIssues,
+		rs.Forks,
 		rs.Archived,
 		rs.DefaultBranch,
 		rs.StarsHistory,
@@ -174,6 +177,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 	result := RepoStats{
 		GHPath:        ghRepo,
 		Stars:         int(res["stargazers_count"].(float64)),
+		Size:          int(res["size"].(float64)),
 		Language:      language,
 		OpenIssues:    int(res["open_issues_count"].(float64)),
 		Forks:         int(res["forks_count"].(float64)),
