@@ -35,6 +35,9 @@ func main() {
 	result, _ := client.GetAllStats(ghRepo)
 	fmt.Println(result)
 
+	result, _ = client.GetAllStats("temporalio/temporal")
+	fmt.Println(result)
+
 	result, _ = client.GetAllStats("envoyproxy/envoy")
 	fmt.Println(result)
 

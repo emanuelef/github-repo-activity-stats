@@ -4,6 +4,8 @@
 .DS_Store
 .idea
 
+*.ipynb
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -29,3 +31,4 @@
 vendor/
 vendor
 /Godeps/
+cncf/stats.ipynb
