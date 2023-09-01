@@ -183,7 +183,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 	}
 
 	if !resp.IsSuccess() {
-		log.Panicln("Error getting repo infos")
+		log.Println("Error getting repo infos")
 		return nil, fmt.Errorf("%s Error getting repo infos", resp.Status())
 	}
 
