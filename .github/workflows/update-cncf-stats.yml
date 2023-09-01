@@ -28,8 +28,8 @@ jobs:
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          file_pattern: "./cncf/*.csv"
-          disable_globbing: false
+          file_pattern: "*.csv"
+          disable_globbing: true
 
       - name: Archive csv results
         uses: actions/upload-artifact@v3
