@@ -29,6 +29,10 @@ jobs:
           PAT: ${{ secrets.PAT }}
           FILE_SUFFIX: "latest"
 
+      - run: |
+          cd cncf
+          ls
+
       - name: Push generated csv files to the repo
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
