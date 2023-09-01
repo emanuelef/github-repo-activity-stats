@@ -21,7 +21,7 @@ jobs:
 
       - name: Run
         working-directory: ./cncf
-        run: go run ./cncf/main.go
+        run: go run main.go
         env:
           PAT: ${{ secrets.GITHUB_TOKEN }}
           FILE_SUFFIX: "latest"
