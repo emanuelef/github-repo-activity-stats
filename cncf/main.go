@@ -116,8 +116,7 @@ func main() {
 					result, err := client.GetAllStats(p["main_repo"].(string))
 
 					if err != nil {
-						log.Printf("Error getting all stats %v", err)
-						return
+						log.Fatalf("Error getting all stats %v", err)
 					}
 
 					fmt.Println(result)

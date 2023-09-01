@@ -26,7 +26,8 @@ jobs:
           PAT: ${{ secrets.GITHUB_TOKEN }}
           FILE_SUFFIX: "latest"
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Push generated csv files to the repo
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           file_pattern: "*.csv"
           disable_globbing: true
