@@ -177,9 +177,14 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	apiGithubUrl := fmt.Sprintf("%s/repos/%s", apiGHUrl, ghRepo)
 
-	_, err := restyReq.Get(apiGithubUrl)
+	resp, err := restyReq.Get(apiGithubUrl)
 	if err != nil {
 		return nil, err
+	}
+
+	if !resp.IsSuccess() {
+		log.Panicln("Error getting repo infos")
+		return nil, fmt.Errorf("%s Error getting repo infos", resp.Status())
 	}
 
 	language, ok := res["language"].(string)

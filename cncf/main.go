@@ -112,7 +112,13 @@ func main() {
 				p := val.(map[string]any)
 				fmt.Printf("%s %s %s\n", key, p["main_repo"], p["status"])
 				if p["status"].(string) != "-" {
-					result, _ := client.GetAllStats(p["main_repo"].(string))
+					result, err := client.GetAllStats(p["main_repo"].(string))
+
+					if err != nil {
+						log.Printf("Error getting all stats %v", err)
+						return
+					}
+
 					fmt.Println(result)
 
 					mutex.Lock()
