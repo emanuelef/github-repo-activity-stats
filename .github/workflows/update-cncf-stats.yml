@@ -1,4 +1,4 @@
-name: Go package
+name: Update CNCF stats
 
 on:
   workflow_dispatch:
