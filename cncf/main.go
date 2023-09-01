@@ -21,16 +21,17 @@ const (
 	CNCFProjectsYamlUrl = "https://raw.githubusercontent.com/cncf/devstats/master/projects.yaml"
 )
 
-type T struct {
-	Projects struct {
-		RenamedC int `yaml:"c"`
-		Project  map[string]any
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return defaultValue
 	}
+	return value
 }
 
 func writeGoDepsMapFile(deps map[string]int) {
 	currentTime := time.Now()
-	outputFile, err := os.Create(fmt.Sprintf("dep-repo-%s.csv", currentTime.Format("02-01-2006")))
+	outputFile, err := os.Create(fmt.Sprintf("dep-repo-%s.csv", getEnv("FILE_SUFFIX", (currentTime.Format("02-01-2006")))))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	currentTime := time.Now()
-	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", currentTime.Format("02-01-2006")))
+	outputFile, err := os.Create(fmt.Sprintf("analysis-%s.csv", getEnv("FILE_SUFFIX", currentTime.Format("02-01-2006"))))
 	if err != nil {
 		log.Fatal(err)
 	}

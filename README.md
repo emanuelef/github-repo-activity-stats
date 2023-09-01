@@ -18,3 +18,7 @@ https://star-history.com/#brigadecore/brigade&Date
 https://star-history.com/#telepresenceio/telepresence&Date
 https://star-history.com/#temporalio/temporal&Date
 
+GH  
+https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/rate-limits-for-github-apps#user-access-tokens-on-githubcom
+
+https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limits-for-requests-from-github-actions
