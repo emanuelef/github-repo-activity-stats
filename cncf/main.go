@@ -78,6 +78,7 @@ func main() {
 		"language",
 		"archived", "dependencies",
 		"status",
+		"start_date", "join_date",
 	}
 
 	csvWriter.Write(headerRow)
@@ -130,6 +131,8 @@ func main() {
 						fmt.Sprintf("%t", result.Archived),
 						fmt.Sprintf("%d", len(result.DirectDeps)),
 						fmt.Sprintf("%s", p["status"]),
+						fmt.Sprintf("%s", p["start_date"]),
+						fmt.Sprintf("%s", p["join_date"]),
 					})
 
 					if len(result.DirectDeps) > 0 {
