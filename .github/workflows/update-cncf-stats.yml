@@ -17,8 +17,5 @@ jobs:
       - name: Install dependencies
         run: go get .
 
-      - name: Build
-        run: go build -v ./...
-
       - name: Run
         run: go run ./cncf/main.go
