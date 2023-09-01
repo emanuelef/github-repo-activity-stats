@@ -130,11 +130,7 @@ func main() {
 
 					if len(result.DirectDeps) > 0 {
 						for _, dep := range result.DirectDeps {
-							if _, ok := depsUse[dep]; ok {
-								depsUse[dep] += 1
-							} else {
-								depsUse[dep] = 1
-							}
+							depsUse[dep] += 1
 						}
 					}
 					mutex.Unlock()
