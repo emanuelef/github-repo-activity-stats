@@ -22,7 +22,7 @@ jobs:
         env:
           PAT: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Archive code coverage results
+      - name: Archive csv results
         uses: actions/upload-artifact@v3
         with:
           name: generated-stats-csv
