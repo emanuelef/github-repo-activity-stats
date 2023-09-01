@@ -1,7 +1,6 @@
 name: Update CNCF stats
 
-on:
-  workflow_dispatch:
+on: [workflow_dispatch]
 
 jobs:
   build:
@@ -26,4 +25,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: generated-stats-csv
-          path: *.csv
+          path: /*.csv
