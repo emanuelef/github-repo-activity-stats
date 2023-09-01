@@ -122,8 +122,6 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 				"per_page": perPage,
 			}).Get(apiGithubUrl)
 
-		log.Println(resp.Status())
-
 		if resp.StatusCode() == http.StatusUnprocessableEntity {
 			log.Println("Request over limit")
 		}

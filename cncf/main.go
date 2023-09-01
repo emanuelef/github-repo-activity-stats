@@ -112,9 +112,7 @@ func main() {
 				p := val.(map[string]any)
 				fmt.Printf("%s %s %s\n", key, p["main_repo"], p["status"])
 				if p["status"].(string) != "-" {
-					log.Println("Getting stats")
 					result, _ := client.GetAllStats(p["main_repo"].(string))
-					log.Println("Got stats")
 					fmt.Println(result)
 
 					mutex.Lock()
@@ -142,5 +140,5 @@ func main() {
 	}
 
 	elapsed := time.Since(currentTime)
-	log.Printf("Took %s", elapsed)
+	log.Printf("Took %s\n", elapsed)
 }
