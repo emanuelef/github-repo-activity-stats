@@ -1,6 +1,9 @@
 name: Update CNCF stats
 
-on: [workflow_dispatch]
+on:
+  schedule:
+    - cron: "0 0 * * *" # runs at 00:00 UTC everyday
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,7 +26,7 @@ jobs:
         working-directory: ./cncf
         run: go run main.go
         env:
-          PAT: ${{ secrets.GITHUB_TOKEN }}
+          PAT: ${{ secrets.PAT }}
           FILE_SUFFIX: "latest"
 
       - name: Push generated csv files to the repo
