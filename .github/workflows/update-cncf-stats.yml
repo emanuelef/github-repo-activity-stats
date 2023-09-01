@@ -21,3 +21,9 @@ jobs:
         run: go run ./cncf/main.go
         env:
           PAT: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated-stats-csv
+          path: *.csv
