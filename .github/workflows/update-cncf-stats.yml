@@ -29,10 +29,10 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           file_pattern: "./cncf/*.csv"
-          disable_globbing: true
+          disable_globbing: false
 
       - name: Archive csv results
         uses: actions/upload-artifact@v3
         with:
           name: generated-stats-csv
-          path: ./*.csv
+          path: ./cncf/*.csv
