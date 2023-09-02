@@ -100,10 +100,12 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 		res := queryStars.Repository.Stargazers.Edges
 
-		// result.LastStarDate = res[0].StarredAt
-
 		currentTime := time.Now()
 		slices.Reverse(res) // order from most recent to least
+
+		if result.LastStarDate.IsZero() {
+			result.LastStarDate = res[0].StarredAt
+		}
 
 		moreThan30daysFlag := false
 

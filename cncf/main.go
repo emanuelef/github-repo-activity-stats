@@ -116,7 +116,6 @@ func main() {
 				fmt.Printf("%s %s %s\n", key, p["main_repo"], p["status"])
 				if p["status"].(string) != "-" {
 					result, err := client.GetAllStats(p["main_repo"].(string))
-
 					if err != nil {
 						log.Fatalf("Error getting all stats %v", err)
 					}

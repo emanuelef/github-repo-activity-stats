@@ -61,5 +61,4 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ghRepo)
 	fmt.Println(result)
-
 }
