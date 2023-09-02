@@ -74,7 +74,8 @@ func main() {
 	defer csvWriter.Flush()
 
 	headerRow := []string{
-		"repo", "stars", "new-stars-last-30d",
+		"repo", "stars", "new-stars-last-30d", "new-stars-last-14d",
+		"new-stars-last-7d", "new-stars-last-24H",
 		"language",
 		"archived", "dependencies",
 		"status",
@@ -127,6 +128,9 @@ func main() {
 						fmt.Sprintf("%s", p["main_repo"]),
 						fmt.Sprintf("%d", result.Stars),
 						fmt.Sprintf("%d", result.AddedLast30d),
+						fmt.Sprintf("%d", result.AddedLast14d),
+						fmt.Sprintf("%d", result.AddedLast7d),
+						fmt.Sprintf("%d", result.AddedLast24H),
 						result.Language,
 						fmt.Sprintf("%t", result.Archived),
 						fmt.Sprintf("%d", len(result.DirectDeps)),
