@@ -48,6 +48,9 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 			}
 			ForkCount        int
 			IsArchived       bool
+			MentionableUsers struct {
+				TotalCount int
+			}
 			DefaultBranchRef struct {
 				Name   string
 				Target struct {
@@ -125,7 +128,7 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 			// Handle error.
 		}
 
-		//fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
+		// fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
 
 		res := queryStars.Repository.Stargazers.Edges
 
