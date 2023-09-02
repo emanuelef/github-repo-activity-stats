@@ -83,42 +83,62 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 			Stargazers struct {
 				TotalCount int
 				Edges      []starred
+				PageInfo   struct {
+					StartCursor     githubv4.String
+					HasPreviousPage bool
+				}
 			} `graphql:"stargazers(last: 100, before: $starsCursor)"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
-	err = c.ghClient.Query(context.Background(), &queryStars, variablesStars)
-	if err != nil {
-		// Handle error.
-	}
-	fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
+	for {
+		err = c.ghClient.Query(context.Background(), &queryStars, variablesStars)
+		if err != nil {
+			// Handle error.
+		}
+		fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
 
-	res := queryStars.Repository.Stargazers.Edges
-	result.LastStarDate = res[0].StarredAt
+		res := queryStars.Repository.Stargazers.Edges
 
-	currentTime := time.Now()
+		// result.LastStarDate = res[0].StarredAt
 
-	slices.Reverse(res)
-	for _, star := range res {
-		if err == nil {
-			days := currentTime.Sub(star.StarredAt).Hours() / 24
+		currentTime := time.Now()
+		slices.Reverse(res) // order from most recent to least
 
-			if days < 1 {
-				result.AddedLast24H += 1
-			}
+		moreThan30daysFlag := false
 
-			if days < 7 {
-				result.AddedLast7d += 1
-			}
+		for _, star := range res {
+			if err == nil {
+				days := currentTime.Sub(star.StarredAt).Hours() / 24
 
-			if days < 14 {
-				result.AddedLast14d += 1
-			}
+				if days <= 1 {
+					result.AddedLast24H += 1
+				}
 
-			if days < 30 {
-				result.AddedLast30d += 1
+				if days <= 7 {
+					result.AddedLast7d += 1
+				}
+
+				if days <= 14 {
+					result.AddedLast14d += 1
+				}
+
+				if days <= 30 {
+					result.AddedLast30d += 1
+				}
+
+				if days > 30 {
+					moreThan30daysFlag = true
+					break
+				}
 			}
 		}
+
+		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThan30daysFlag {
+			break
+		}
+
+		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
 	}
 
 	return &result, nil

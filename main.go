@@ -59,4 +59,7 @@ func main() {
 	result, _ = clientGQL.GetAllStats("ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
 
+	result, _ = clientGQL.GetAllStats(ghRepo)
+	fmt.Println(result)
+
 }
