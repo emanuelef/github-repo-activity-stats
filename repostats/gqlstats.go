@@ -8,17 +8,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/shurcooL/githubv4"
 )
 
 type ClientGQL struct {
-	ghClient *githubv4.Client
+	ghClient    *githubv4.Client
+	restyClient *resty.Client
 }
 
 func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 	ghClient := githubv4.NewClient(oauthClient)
+	restyClient := resty.New()
+	restyClient.SetTransport(oauthClient.Transport)
 
-	return &ClientGQL{ghClient: ghClient}
+	return &ClientGQL{ghClient: ghClient, restyClient: restyClient}
 }
 
 func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
@@ -37,7 +41,23 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	var query struct {
 		Repository struct {
-			Description string
+			Description     string
+			StargazerCount  int
+			PrimaryLanguage struct {
+				Name string
+			}
+			ForkCount        int
+			IsArchived       bool
+			DefaultBranchRef struct {
+				Name   string
+				Target struct {
+					Commit struct {
+						History struct {
+							TotalCount int
+						}
+					} `graphql:"... on Commit"`
+				}
+			}
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
@@ -46,6 +66,14 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		// Handle error.
 	}
 	fmt.Println("Desc:", query.Repository.Description)
+	fmt.Println("Total Commit:", query.Repository.DefaultBranchRef.Target.Commit.History.TotalCount)
+
+	result.GHPath = ghRepo
+	result.Stars = query.Repository.StargazerCount
+	result.DefaultBranch = query.Repository.DefaultBranchRef.Name
+	result.Archived = query.Repository.IsArchived
+	result.Forks = query.Repository.ForkCount
+	result.Language = query.Repository.PrimaryLanguage.Name
 
 	/*
 		{
@@ -141,6 +169,10 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		}
 
 		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
+	}
+
+	if result.Language == "Go" {
+		GetGoStats(c.restyClient, ghRepo, &result)
 	}
 
 	return &result, nil

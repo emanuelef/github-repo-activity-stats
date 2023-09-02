@@ -171,6 +171,32 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 	return result, nil
 }
 
+func GetGoStats(restyClient *resty.Client, ghRepo string, result *RepoStats) error {
+	goModUrl := fmt.Sprintf("%s/%s/%s/go.mod", rawGHUrl, ghRepo, result.DefaultBranch)
+	resp, err := restyClient.R().Get(goModUrl)
+
+	if err == nil {
+		f, err := modfile.Parse("go.mod", resp.Body(), nil)
+		if err != nil {
+			return nil
+		}
+		result.GoVersion = f.Go.Version
+
+		var directDeps []string
+
+		for _, req := range f.Require {
+			// only direct dependencies
+			if !req.Indirect {
+				directDeps = append(directDeps, req.Mod.Path)
+			}
+		}
+
+		result.DirectDeps = directDeps
+	}
+
+	return nil
+}
+
 func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 	res := make(map[string]any)
 	restyReq := c.restyClient.R().SetResult(&res)
@@ -207,27 +233,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	// get go.mod file
 	if result.Language == "Go" {
-		goModUrl := fmt.Sprintf("%s/%s/%s/go.mod", rawGHUrl, ghRepo, result.DefaultBranch)
-		resp, err := c.restyClient.R().Get(goModUrl)
-
-		if err == nil {
-			f, err := modfile.Parse("go.mod", resp.Body(), nil)
-			if err != nil {
-				return &result, nil
-			}
-			result.GoVersion = f.Go.Version
-
-			var directDeps []string
-
-			for _, req := range f.Require {
-				// only direct dependencies
-				if !req.Indirect {
-					directDeps = append(directDeps, req.Mod.Path)
-				}
-			}
-
-			result.DirectDeps = directDeps
-		}
+		GetGoStats(c.restyClient, ghRepo, &result)
 	}
 
 	return &result, nil
