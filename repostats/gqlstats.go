@@ -124,7 +124,8 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		if err != nil {
 			// Handle error.
 		}
-		fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
+
+		//fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
 
 		res := queryStars.Repository.Stargazers.Edges
 
