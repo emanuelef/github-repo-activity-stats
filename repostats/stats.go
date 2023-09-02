@@ -146,7 +146,7 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 				dateString := star["starred_at"].(string)
 				output, err := time.Parse(time.RFC3339, dateString)
 				if err == nil {
-					days := currentTime.Sub(output).Hours()
+					days := currentTime.Sub(output).Hours() / 24
 
 					if days < 1 {
 						result.AddedLast24H += 1
