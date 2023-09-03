@@ -3,6 +3,7 @@ package repostats
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"slices"
 	"strings"
@@ -39,10 +40,19 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		"name":  githubv4.String(repoSplit[1]),
 	}
 
+	type release struct {
+		Node struct {
+			CreatedAt   time.Time
+			PublishedAt time.Time
+			Name        string
+		}
+	}
+
 	var query struct {
 		Repository struct {
 			Description     string
 			StargazerCount  int
+			CreatedAt       time.Time
 			PrimaryLanguage struct {
 				Name string
 			}
@@ -57,16 +67,20 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 					Commit struct {
 						History struct {
 							TotalCount int
-						}
+						} `graphql:"history(first: 3)"`
 					} `graphql:"... on Commit"`
 				}
 			}
+			Releases struct {
+				TotalCount int
+				Edges      []release
+			} `graphql:"releases(first: 3)"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
 	err := c.ghClient.Query(context.Background(), &query, variables)
 	if err != nil {
-		// Handle error.
+		log.Printf("%v\n", err)
 	}
 	fmt.Println("Desc:", query.Repository.Description)
 	fmt.Println("Total Commit:", query.Repository.DefaultBranchRef.Target.Commit.History.TotalCount)
