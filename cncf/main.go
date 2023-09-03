@@ -75,7 +75,7 @@ func main() {
 
 	headerRow := []string{
 		"repo", "stars", "new-stars-last-30d", "new-stars-last-14d",
-		"new-stars-last-7d", "new-stars-last-24H",
+		"new-stars-last-7d", "new-stars-last-24H", "stars-per-mille-0d",
 		"language",
 		"archived", "dependencies",
 		"status",
@@ -131,6 +131,7 @@ func main() {
 						fmt.Sprintf("%d", result.AddedLast14d),
 						fmt.Sprintf("%d", result.AddedLast7d),
 						fmt.Sprintf("%d", result.AddedLast24H),
+						fmt.Sprintf("%.3f", result.AddedPerMille30d),
 						result.Language,
 						fmt.Sprintf("%t", result.Archived),
 						fmt.Sprintf("%d", len(result.DirectDeps)),

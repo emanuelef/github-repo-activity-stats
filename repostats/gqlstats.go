@@ -40,6 +40,12 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		"name":  githubv4.String(repoSplit[1]),
 	}
 
+	type commit struct {
+		Node struct {
+			CommittedDate time.Time
+		}
+	}
+
 	type release struct {
 		Node struct {
 			CreatedAt   time.Time
@@ -67,6 +73,7 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 					Commit struct {
 						History struct {
 							TotalCount int
+							Edges      []commit
 						} `graphql:"history(first: 3)"`
 					} `graphql:"... on Commit"`
 				}
@@ -86,11 +93,21 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 	fmt.Println("Total Commit:", query.Repository.DefaultBranchRef.Target.Commit.History.TotalCount)
 
 	result.GHPath = ghRepo
+	result.CreatedAt = query.Repository.CreatedAt
 	result.Stars = query.Repository.StargazerCount
 	result.DefaultBranch = query.Repository.DefaultBranchRef.Name
 	result.Archived = query.Repository.IsArchived
 	result.Forks = query.Repository.ForkCount
 	result.Language = query.Repository.PrimaryLanguage.Name
+
+	commits := query.Repository.DefaultBranchRef.Target.Commit.History.Edges
+	if len(commits) > 0 {
+		result.LastCommitDate = commits[0].Node.CommittedDate
+	}
+	releases := query.Repository.Releases.Edges
+	if len(releases) > 0 {
+		result.LastReleaseDate = releases[0].Node.CreatedAt
+	}
 
 	/*
 		{
@@ -187,6 +204,10 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		}
 
 		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
+	}
+
+	if result.Stars > 0 {
+		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(result.Stars))
 	}
 
 	if result.Language == "Go" {
