@@ -64,9 +64,13 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 			}
 			ForkCount        int
 			IsArchived       bool
+			DiskUsage        int
 			MentionableUsers struct {
 				TotalCount int
 			}
+			OpenIssues struct {
+				TotalCount int
+			} `graphql:"issues(states: OPEN)"`
 			DefaultBranchRef struct {
 				Name   string
 				Target struct {
@@ -98,7 +102,10 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 	result.DefaultBranch = query.Repository.DefaultBranchRef.Name
 	result.Archived = query.Repository.IsArchived
 	result.Forks = query.Repository.ForkCount
+	result.OpenIssues = query.Repository.OpenIssues.TotalCount
 	result.Language = query.Repository.PrimaryLanguage.Name
+	result.Size = query.Repository.DiskUsage
+	result.MentionableUsers = query.Repository.MentionableUsers.TotalCount
 
 	commits := query.Repository.DefaultBranchRef.Target.Commit.History.Edges
 	if len(commits) > 0 {

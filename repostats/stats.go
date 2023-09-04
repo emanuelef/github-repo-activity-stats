@@ -21,11 +21,11 @@ type StarsHistory struct {
 
 func (sh StarsHistory) String() string {
 	return fmt.Sprintf(`Last Star Date: %s
-AddedLast24H: %d
-AddedLast7d: %d
-AddedLast14d: %d
-AddedLast30d: %d
-AddedPerMille30: %.2f`, sh.LastStarDate,
+Stars AddedLast24H: %d
+Stars AddedLast7d: %d
+Stars AddedLast14d: %d
+Stars AddedLast30d: %d
+Stars AddedPerMille30d: %.2f`, sh.LastStarDate,
 		sh.AddedLast24H,
 		sh.AddedLast7d,
 		sh.AddedLast14d,
@@ -34,17 +34,18 @@ AddedPerMille30: %.2f`, sh.LastStarDate,
 }
 
 type RepoStats struct {
-	GHPath          string
-	Stars           int
-	Size            int
-	Language        string
-	OpenIssues      int
-	Forks           int
-	Archived        bool
-	DefaultBranch   string
-	CreatedAt       time.Time
-	LastCommitDate  time.Time
-	LastReleaseDate time.Time
+	GHPath           string
+	Stars            int
+	Size             int
+	Language         string
+	OpenIssues       int
+	Forks            int
+	Archived         bool
+	DefaultBranch    string
+	MentionableUsers int
+	CreatedAt        time.Time
+	LastCommitDate   time.Time
+	LastReleaseDate  time.Time
 	StarsHistory
 	GoRepo
 }
@@ -61,6 +62,7 @@ Language: %s
 Open Issues: %d
 Forks: %d
 Archived: %t
+Mentionable Users: %d
 Default Branch: %s
 %s
 Go version: %s
@@ -75,6 +77,7 @@ Go Direct dependencies: %d
 		rs.OpenIssues,
 		rs.Forks,
 		rs.Archived,
+		rs.MentionableUsers,
 		rs.DefaultBranch,
 		rs.StarsHistory,
 		rs.GoVersion,
