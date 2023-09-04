@@ -26,6 +26,112 @@ func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 	return &ClientGQL{ghClient: ghClient, restyClient: restyClient}
 }
 
+func (c *ClientGQL) getStarsHistory(owner, name string, totalStars int) (StarsHistory, error) {
+	result := StarsHistory{}
+
+	/*
+		{
+			repository(owner: "kubernetes", name: "kubernetes") {
+			  stargazers(last: 100) {
+				totalCount
+				edges {
+				  starredAt
+				  cursor
+				}
+			  }
+			}
+			rateLimit {
+			  limit
+			  cost
+			  remaining
+			  resetAt
+			}
+		  }
+	*/
+
+	variablesStars := map[string]interface{}{
+		"owner":       githubv4.String(owner),
+		"name":        githubv4.String(name),
+		"starsCursor": (*githubv4.String)(nil),
+	}
+
+	type starred struct {
+		StarredAt time.Time
+	}
+
+	var queryStars struct {
+		Repository struct {
+			Stargazers struct {
+				TotalCount int
+				Edges      []starred
+				PageInfo   struct {
+					StartCursor     githubv4.String
+					HasPreviousPage bool
+				}
+			} `graphql:"stargazers(last: 100, before: $starsCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for {
+		err := c.ghClient.Query(context.Background(), &queryStars, variablesStars)
+		if err != nil {
+			// Handle error.
+		}
+
+		// fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
+
+		res := queryStars.Repository.Stargazers.Edges
+
+		currentTime := time.Now()
+		slices.Reverse(res) // order from most recent to least
+
+		if result.LastStarDate.IsZero() {
+			result.LastStarDate = res[0].StarredAt
+		}
+
+		moreThan30daysFlag := false
+
+		for _, star := range res {
+			if err == nil {
+				days := currentTime.Sub(star.StarredAt).Hours() / 24
+
+				if days <= 1 {
+					result.AddedLast24H += 1
+				}
+
+				if days <= 7 {
+					result.AddedLast7d += 1
+				}
+
+				if days <= 14 {
+					result.AddedLast14d += 1
+				}
+
+				if days <= 30 {
+					result.AddedLast30d += 1
+				}
+
+				if days > 30 {
+					moreThan30daysFlag = true
+					break
+				}
+			}
+		}
+
+		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThan30daysFlag {
+			break
+		}
+
+		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
+	}
+
+	if totalStars > 0 {
+		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalStars))
+	}
+
+	return result, nil
+}
+
 func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 	result := RepoStats{}
 
@@ -116,106 +222,7 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		result.LastReleaseDate = releases[0].Node.CreatedAt
 	}
 
-	/*
-		{
-			repository(owner: "kubernetes", name: "kubernetes") {
-			  stargazers(last: 100) {
-				totalCount
-				edges {
-				  starredAt
-				  cursor
-				}
-			  }
-			}
-			rateLimit {
-			  limit
-			  cost
-			  remaining
-			  resetAt
-			}
-		  }
-	*/
-
-	variablesStars := map[string]interface{}{
-		"owner":       githubv4.String(repoSplit[0]),
-		"name":        githubv4.String(repoSplit[1]),
-		"starsCursor": (*githubv4.String)(nil),
-	}
-
-	type starred struct {
-		StarredAt time.Time
-		Cursor    string
-	}
-
-	var queryStars struct {
-		Repository struct {
-			Stargazers struct {
-				TotalCount int
-				Edges      []starred
-				PageInfo   struct {
-					StartCursor     githubv4.String
-					HasPreviousPage bool
-				}
-			} `graphql:"stargazers(last: 100, before: $starsCursor)"`
-		} `graphql:"repository(owner: $owner, name: $name)"`
-	}
-
-	for {
-		err = c.ghClient.Query(context.Background(), &queryStars, variablesStars)
-		if err != nil {
-			// Handle error.
-		}
-
-		// fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
-
-		res := queryStars.Repository.Stargazers.Edges
-
-		currentTime := time.Now()
-		slices.Reverse(res) // order from most recent to least
-
-		if result.LastStarDate.IsZero() {
-			result.LastStarDate = res[0].StarredAt
-		}
-
-		moreThan30daysFlag := false
-
-		for _, star := range res {
-			if err == nil {
-				days := currentTime.Sub(star.StarredAt).Hours() / 24
-
-				if days <= 1 {
-					result.AddedLast24H += 1
-				}
-
-				if days <= 7 {
-					result.AddedLast7d += 1
-				}
-
-				if days <= 14 {
-					result.AddedLast14d += 1
-				}
-
-				if days <= 30 {
-					result.AddedLast30d += 1
-				}
-
-				if days > 30 {
-					moreThan30daysFlag = true
-					break
-				}
-			}
-		}
-
-		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThan30daysFlag {
-			break
-		}
-
-		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
-	}
-
-	if result.Stars > 0 {
-		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(result.Stars))
-	}
+	result.StarsHistory, _ = c.getStarsHistory(repoSplit[0], repoSplit[1], result.Stars)
 
 	if result.Language == "Go" {
 		GetGoStats(c.restyClient, ghRepo, &result)
