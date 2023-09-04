@@ -1,4 +1,4 @@
-name: Update CNCF stats
+name: Update Example stats
 
 on:
   schedule:
@@ -23,7 +23,7 @@ jobs:
         run: go get .
 
       - name: Run
-        working-directory: ./cncf
+        working-directory: ./example
         run: go run main.go
         env:
           PAT: ${{ secrets.PAT }}
@@ -36,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: generated-stats-csv
-          path: ./cncf/*.csv
+          path: ./example/*.csv
