@@ -56,9 +56,11 @@ func main() {
 
 	clientGQL := repostats.NewClientGQL(oauthClient)
 
-	result, _ = clientGQL.GetAllStats("ceccopierangiolieugenio/pyTermTk")
+	ctx := context.Background()
+
+	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
 
-	result, _ = clientGQL.GetAllStats(ghRepo)
+	result, _ = clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
 }

@@ -21,6 +21,8 @@ func main() {
 	sem := semaphore.NewWeighted(10)
 	var wg sync.WaitGroup
 
+	ctx := context.Background()
+
 	currentTime := time.Now()
 	outputFile, err := os.Create(fmt.Sprintf("analysis-latest.csv"))
 	if err != nil {
@@ -61,15 +63,13 @@ func main() {
 		mainRepo := scanner.Text()
 		fmt.Println(mainRepo)
 
-		ctx := context.Background()
-
 		wg.Add(1)
 
 		go func() {
 			sem.Acquire(ctx, 1)
 			defer sem.Release(1)
 			defer wg.Done()
-			result, err := client.GetAllStats(mainRepo)
+			result, err := client.GetAllStats(ctx, mainRepo)
 			if err != nil {
 				log.Fatalf("Error getting all stats %v", err)
 			}

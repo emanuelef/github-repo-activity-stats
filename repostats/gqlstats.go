@@ -132,7 +132,7 @@ func (c *ClientGQL) getStarsHistory(owner, name string, totalStars int) (StarsHi
 	return result, nil
 }
 
-func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
+func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats, error) {
 	result := RepoStats{}
 
 	repoSplit := strings.Split(ghRepo, "/")
@@ -195,7 +195,7 @@ func (c *ClientGQL) GetAllStats(ghRepo string) (*RepoStats, error) {
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
-	err := c.ghClient.Query(context.Background(), &query, variables)
+	err := c.ghClient.Query(ctx, &query, variables)
 	if err != nil {
 		log.Printf("%v\n", err)
 	}
