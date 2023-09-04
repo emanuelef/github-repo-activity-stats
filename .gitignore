@@ -33,5 +33,5 @@ vendor
 /Godeps/
 cncf/stats.ipynb
 
-!/cncf/analysis-latest.csv
-!/cncf/dep-repo-latest.csv
+!/example/analysis-latest.csv
+!/example/dep-repo-latest.csv
