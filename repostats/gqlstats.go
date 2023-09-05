@@ -85,7 +85,7 @@ func (c *ClientGQL) getStarsHistory(owner, name string, totalStars int) (StarsHi
 		currentTime := time.Now()
 		slices.Reverse(res) // order from most recent to least
 
-		if result.LastStarDate.IsZero() {
+		if len(res) > 0 && result.LastStarDate.IsZero() {
 			result.LastStarDate = res[0].StarredAt
 		}
 
