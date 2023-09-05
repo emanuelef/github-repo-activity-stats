@@ -198,14 +198,14 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 						History struct {
 							TotalCount int
 							Edges      []commit
-						} `graphql:"history(first: 3)"`
+						} `graphql:"history(first: 1)"`
 					} `graphql:"... on Commit"`
 				}
 			}
 			Releases struct {
 				TotalCount int
 				Edges      []release
-			} `graphql:"releases(first: 3)"`
+			} `graphql:"releases(first: 1)"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
