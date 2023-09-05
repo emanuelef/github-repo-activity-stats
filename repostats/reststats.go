@@ -120,7 +120,10 @@ func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, r
 		if err != nil {
 			return nil
 		}
-		result.GoVersion = f.Go.Version
+
+		if f.Go != nil {
+			result.GoVersion = f.Go.Version
+		}
 
 		var directDeps []string
 
