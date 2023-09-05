@@ -39,7 +39,7 @@ func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 }
 
 func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) error {
-	ctx, span := tracer.Start(ctx, "grapql-query")
+	ctx, span := tracer.Start(ctx, "graphql-query")
 	defer span.End()
 	err := c.ghClient.Query(ctx, &q, variables)
 	return err
