@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/shurcooL/githubv4"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ClientGQL struct {
@@ -26,7 +28,7 @@ func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 	return &ClientGQL{ghClient: ghClient, restyClient: restyClient}
 }
 
-func (c *ClientGQL) getStarsHistory(owner, name string, totalStars int) (StarsHistory, error) {
+func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
 	result := StarsHistory{}
 
 	/*
@@ -135,6 +137,9 @@ func (c *ClientGQL) getStarsHistory(owner, name string, totalStars int) (StarsHi
 func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats, error) {
 	result := RepoStats{}
 
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("stringAttr", "Ciao"))
+
 	repoSplit := strings.Split(ghRepo, "/")
 
 	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
@@ -222,7 +227,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 		result.LastReleaseDate = releases[0].Node.CreatedAt
 	}
 
-	result.StarsHistory, _ = c.getStarsHistory(repoSplit[0], repoSplit[1], result.Stars)
+	result.StarsHistory, _ = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
 
 	if result.Language == "Go" {
 		GetGoStats(c.restyClient, ghRepo, &result)
