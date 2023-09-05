@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/shurcooL/githubv4"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,9 +30,11 @@ type ClientGQL struct {
 
 func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 	ghClient := githubv4.NewClient(oauthClient)
-	restyClient := resty.New()
-	restyClient.SetTransport(oauthClient.Transport)
-
+	restyClient := resty.NewWithClient(
+		&http.Client{
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+		},
+	)
 	return &ClientGQL{ghClient: ghClient, restyClient: restyClient}
 }
 
@@ -239,7 +242,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 	result.StarsHistory, _ = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
 
 	if result.Language == "Go" {
-		GetGoStats(c.restyClient, ghRepo, &result)
+		GetGoStats(ctx, c.restyClient, ghRepo, &result)
 	}
 
 	return &result, nil

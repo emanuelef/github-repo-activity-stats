@@ -1,6 +1,7 @@
 package repostats
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -107,9 +108,12 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 	return result, nil
 }
 
-func GetGoStats(restyClient *resty.Client, ghRepo string, result *RepoStats) error {
+func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, result *RepoStats) error {
 	goModUrl := fmt.Sprintf("%s/%s/%s/go.mod", rawGHUrl, ghRepo, result.DefaultBranch)
-	resp, err := restyClient.R().Get(goModUrl)
+
+	restyReq := restyClient.R()
+	restyReq.SetContext(ctx)
+	resp, err := restyReq.Get(goModUrl)
 
 	if err == nil {
 		f, err := modfile.Parse("go.mod", resp.Body(), nil)
@@ -169,7 +173,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 
 	// get go.mod file
 	if result.Language == "Go" {
-		GetGoStats(c.restyClient, ghRepo, &result)
+		GetGoStats(context.Background(), c.restyClient, ghRepo, &result)
 	}
 
 	return &result, nil
