@@ -11,9 +11,16 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/shurcooL/githubv4"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer trace.Tracer
+
+func init() {
+	tracer = otel.Tracer("github.com/emanuelef/cncf-repos-stats")
+}
 
 type ClientGQL struct {
 	ghClient    *githubv4.Client
@@ -137,8 +144,10 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats, error) {
 	result := RepoStats{}
 
-	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.String("stringAttr", "Ciao"))
+	ctx, span := tracer.Start(ctx, "fetch-repo-stats")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("github.repo", ghRepo))
 
 	repoSplit := strings.Split(ghRepo, "/")
 
