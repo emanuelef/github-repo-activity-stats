@@ -38,6 +38,13 @@ func NewClientGQL(oauthClient *http.Client) *ClientGQL {
 	return &ClientGQL{ghClient: ghClient, restyClient: restyClient}
 }
 
+func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) error {
+	ctx, span := tracer.Start(ctx, "grapql-query")
+	defer span.End()
+	err := c.ghClient.Query(ctx, &q, variables)
+	return err
+}
+
 func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
 	result := StarsHistory{}
 
@@ -85,7 +92,7 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	}
 
 	for {
-		err := c.ghClient.Query(context.Background(), &queryStars, variablesStars)
+		err := c.query(ctx, &queryStars, variablesStars)
 		if err != nil {
 			// Handle error.
 		}
@@ -212,7 +219,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
-	err := c.ghClient.Query(ctx, &query, variables)
+	err := c.query(ctx, &query, variables)
 	if err != nil {
 		log.Printf("%v\n", err)
 	}
