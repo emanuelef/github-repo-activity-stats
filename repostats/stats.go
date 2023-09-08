@@ -10,6 +10,11 @@ type GoRepo struct {
 	DirectDeps []string
 }
 
+type StarsPerDay struct {
+	day   time.Time
+	stars int
+}
+
 type StarsHistory struct {
 	AddedLast24H     int
 	AddedLast7d      int
@@ -17,6 +22,7 @@ type StarsHistory struct {
 	AddedLast30d     int
 	LastStarDate     time.Time
 	AddedPerMille30d float32
+	StarsTimeline    []StarsPerDay
 }
 
 func (sh StarsHistory) String() string {

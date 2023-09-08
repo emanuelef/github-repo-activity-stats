@@ -63,4 +63,5 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
+	// fmt.Println(result.StarsHistory.StarsTimeline)
 }

@@ -48,6 +48,10 @@ func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) 
 func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
 	result := StarsHistory{}
 
+	if totalStars == 0 {
+		return result, nil
+	}
+
 	/*
 		{
 			repository(owner: "kubernetes", name: "kubernetes") {
@@ -110,9 +114,22 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 
 		moreThan30daysFlag := false
 
+		currentDay := StarsPerDay{
+			day: res[0].StarredAt.Truncate(24 * time.Hour),
+		}
+
 		for _, star := range res {
 			if err == nil {
 				days := currentTime.Sub(star.StarredAt).Hours() / 24
+
+				currentTime.Date()
+
+				if star.StarredAt.Truncate(24 * time.Hour).Equal(currentDay.day) {
+					currentDay.stars += 1
+				} else {
+					result.StarsTimeline = append(result.StarsTimeline, currentDay)
+					currentDay.day = star.StarredAt.Truncate(24 * time.Hour)
+				}
 
 				if days <= 1 {
 					result.AddedLast24H += 1
