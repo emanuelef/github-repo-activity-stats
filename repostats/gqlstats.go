@@ -52,6 +52,8 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		return result, nil
 	}
 
+	currentTime := time.Now()
+
 	/*
 		{
 			repository(owner: "kubernetes", name: "kubernetes") {
@@ -95,17 +97,19 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
+	for i := 1; i < 31; i++ {
+		result.StarsTimeline = append(result.StarsTimeline, StarsPerDay{Day: JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
+	}
+
 	for {
 		err := c.query(ctx, &queryStars, variablesStars)
 		if err != nil {
-			// Handle error.
+			return result, err
 		}
 
 		// fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
 
 		res := queryStars.Repository.Stargazers.Edges
-
-		currentTime := time.Now()
 		slices.Reverse(res) // order from most recent to least
 
 		if len(res) > 0 && result.LastStarDate.IsZero() {
@@ -114,44 +118,31 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 
 		moreThan30daysFlag := false
 
-		currentDay := StarsPerDay{
-			Day: JSONDay(res[0].StarredAt.Truncate(24 * time.Hour)),
-		}
-
 		for _, star := range res {
-			if err == nil {
-				days := currentTime.Sub(star.StarredAt).Hours() / 24
+			days := currentTime.Sub(star.StarredAt).Hours() / 24
 
-				currentTime.Date()
-
-				if star.StarredAt.Truncate(24 * time.Hour).Equal(time.Time(currentDay.Day)) {
-					currentDay.Stars += 1
-				} else {
-					result.StarsTimeline = append(result.StarsTimeline, currentDay)
-					currentDay.Day = JSONDay(star.StarredAt.Truncate(24 * time.Hour))
-				}
-
-				if days <= 1 {
-					result.AddedLast24H += 1
-				}
-
-				if days <= 7 {
-					result.AddedLast7d += 1
-				}
-
-				if days <= 14 {
-					result.AddedLast14d += 1
-				}
-
-				if days <= 30 {
-					result.AddedLast30d += 1
-				}
-
-				if days > 30 {
-					moreThan30daysFlag = true
-					break
-				}
+			if days > 30 {
+				moreThan30daysFlag = true
+				break
 			}
+
+			if days <= 1 {
+				result.AddedLast24H += 1
+			}
+
+			if days <= 7 {
+				result.AddedLast7d += 1
+			}
+
+			if days <= 14 {
+				result.AddedLast14d += 1
+			}
+
+			if days <= 30 {
+				result.AddedLast30d += 1
+			}
+
+			result.StarsTimeline[29-int(days)].Stars += 1
 		}
 
 		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThan30daysFlag {
@@ -164,8 +155,6 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	if totalStars > 0 {
 		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalStars))
 	}
-
-	slices.Reverse(result.StarsTimeline)
 
 	return result, nil
 }
