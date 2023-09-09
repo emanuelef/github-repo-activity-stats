@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +21,8 @@ func main() {
 	var mutex sync.Mutex
 	sem := semaphore.NewWeighted(10)
 	var wg sync.WaitGroup
+
+	starsHistory := map[string][]repostats.StarsPerDay{}
 
 	ctx := context.Background()
 
@@ -95,11 +98,18 @@ func main() {
 					depsUse[dep] += 1
 				}
 			}
+
+			starsHistory[mainRepo] = result.StarsTimeline
+
 			mutex.Unlock()
 		}()
 	}
 
 	wg.Wait()
+
+	jsonData, _ := json.MarshalIndent(starsHistory, "", " ")
+
+	_ = os.WriteFile("stars-history-30d.json", jsonData, 0o644)
 
 	elapsed := time.Since(currentTime)
 	log.Printf("Took %s\n", elapsed)
