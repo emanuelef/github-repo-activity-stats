@@ -72,7 +72,7 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		  }
 	*/
 
-	variablesStars := map[string]interface{}{
+	variablesStars := map[string]any{
 		"owner":       githubv4.String(owner),
 		"name":        githubv4.String(name),
 		"starsCursor": (*githubv4.String)(nil),
@@ -115,7 +115,7 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		moreThan30daysFlag := false
 
 		currentDay := StarsPerDay{
-			day: res[0].StarredAt.Truncate(24 * time.Hour),
+			Day: JSONDay(res[0].StarredAt.Truncate(24 * time.Hour)),
 		}
 
 		for _, star := range res {
@@ -124,11 +124,11 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 
 				currentTime.Date()
 
-				if star.StarredAt.Truncate(24 * time.Hour).Equal(currentDay.day) {
-					currentDay.stars += 1
+				if star.StarredAt.Truncate(24 * time.Hour).Equal(time.Time(currentDay.Day)) {
+					currentDay.Stars += 1
 				} else {
 					result.StarsTimeline = append(result.StarsTimeline, currentDay)
-					currentDay.day = star.StarredAt.Truncate(24 * time.Hour)
+					currentDay.Day = JSONDay(star.StarredAt.Truncate(24 * time.Hour))
 				}
 
 				if days <= 1 {
@@ -165,6 +165,8 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalStars))
 	}
 
+	slices.Reverse(result.StarsTimeline)
+
 	return result, nil
 }
 
@@ -182,7 +184,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 		return nil, fmt.Errorf("Repo should be provided as owner/name")
 	}
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"owner": githubv4.String(repoSplit[0]),
 		"name":  githubv4.String(repoSplit[1]),
 	}
