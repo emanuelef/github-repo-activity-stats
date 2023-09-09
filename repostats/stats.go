@@ -26,8 +26,8 @@ func (ct *CustomTime) String() string {
 type JSONDay time.Time
 
 func (t JSONDay) MarshalJSON() ([]byte, error) {
-	stamp := fmt.Sprintf("\"%s\"", time.Time(t).Format("02-01-2006"))
-	return []byte(stamp), nil
+	dayFormatted := fmt.Sprintf("\"%s\"", time.Time(t).Format("02-01-2006"))
+	return []byte(dayFormatted), nil
 }
 
 type StarsPerDay struct {
