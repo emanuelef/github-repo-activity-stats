@@ -10,19 +10,6 @@ type GoRepo struct {
 	DirectDeps []string
 }
 
-type CustomTime time.Time
-
-const ctLayout = "2006-01-02 15:04:05 Z07:00"
-
-func (ct CustomTime) MarshalJSON() ([]byte, error) {
-	return []byte(ct.String()), nil
-}
-
-func (ct *CustomTime) String() string {
-	t := time.Time(*ct)
-	return fmt.Sprintf("%q", t.Format(ctLayout))
-}
-
 type JSONDay time.Time
 
 func (t JSONDay) MarshalJSON() ([]byte, error) {
