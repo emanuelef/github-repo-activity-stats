@@ -1,6 +1,7 @@
 package repostats
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -20,6 +21,10 @@ func (t JSONDay) MarshalJSON() ([]byte, error) {
 type StarsPerDay struct {
 	Day   JSONDay
 	Stars int
+}
+
+func (t StarsPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.Stars})
 }
 
 type StarsHistory struct {
