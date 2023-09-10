@@ -19,12 +19,13 @@ func (t JSONDay) MarshalJSON() ([]byte, error) {
 }
 
 type StarsPerDay struct {
-	Day   JSONDay
-	Stars int
+	Day        JSONDay
+	Stars      int
+	TotalStars int
 }
 
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
-	return json.Marshal([]any{t.Day, t.Stars})
+	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
 
 type StarsHistory struct {

@@ -17,35 +17,6 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-func writeStarsHistoryCSV(history []repostats.StarsPerDay) {
-	outputFile, err := os.Create(fmt.Sprintf("stars-k8s-latest.csv"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer outputFile.Close()
-
-	csvWriter := csv.NewWriter(outputFile)
-	defer csvWriter.Flush()
-
-	headerRow := []string{
-		"date", "daily-stars", "total-stars",
-	}
-
-	csvWriter.Write(headerRow)
-
-	totalStars := 0
-
-	for _, v := range history {
-		totalStars += v.Stars
-		csvWriter.Write([]string{
-			fmt.Sprintf("%s", time.Time(v.Day).Format("02-01-2006")),
-			fmt.Sprintf("%d", v.Stars),
-			fmt.Sprintf("%d", totalStars),
-		})
-	}
-}
-
 func main() {
 	var mutex sync.Mutex
 	sem := semaphore.NewWeighted(10)
@@ -139,7 +110,7 @@ func main() {
 	jsonData, _ := json.MarshalIndent(starsHistory, "", " ")
 	_ = os.WriteFile("stars-history-30d.json", jsonData, 0o644)
 
-	writeStarsHistoryCSV(starsHistory["kubernetes/kubernetes"])
+	repostats.WriteStarsHistoryCSV("stars-k8s-latest.csv", starsHistory["kubernetes/kubernetes"])
 
 	elapsed := time.Since(currentTime)
 	log.Printf("Took %s\n", elapsed)

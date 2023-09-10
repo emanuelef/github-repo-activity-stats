@@ -45,6 +45,82 @@ func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) 
 	return err
 }
 
+func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoCreationDate time.Time) ([]StarsPerDay, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []StarsPerDay{}
+	currentTime := time.Now()
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24) + 1
+
+	for i := 0; i < days; i++ {
+		result = append(result, StarsPerDay{Day: JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	variablesStars := map[string]any{
+		"owner":       githubv4.String(owner),
+		"name":        githubv4.String(name),
+		"starsCursor": (*githubv4.String)(nil),
+	}
+
+	type starred struct {
+		StarredAt time.Time
+	}
+
+	var queryStars struct {
+		Repository struct {
+			Stargazers struct {
+				Edges    []starred
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"stargazers(first: 100, after: $starsCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for {
+		err := c.query(ctx, &queryStars, variablesStars)
+		if err != nil {
+			break
+		}
+
+		res := queryStars.Repository.Stargazers.Edges
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, star := range res {
+			days := star.StarredAt.Sub(repoCreationDate).Hours() / 24
+			result[int(days)].Stars++
+		}
+
+		if !queryStars.Repository.Stargazers.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.EndCursor)
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalStars = result[i-1].TotalStars + day.Stars
+		} else {
+			result[i].TotalStars = day.Stars
+		}
+	}
+
+	return result, nil
+}
+
 func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
 	result := StarsHistory{}
 
@@ -154,6 +230,14 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 
 	if totalStars > 0 {
 		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalStars))
+	}
+
+	for i := len(result.StarsTimeline) - 1; i >= 0; i-- {
+		if i == len(result.StarsTimeline)-1 {
+			result.StarsTimeline[i].TotalStars = totalStars
+		} else {
+			result.StarsTimeline[i].TotalStars = result.StarsTimeline[i+1].TotalStars - result.StarsTimeline[i+1].Stars
+		}
 	}
 
 	return result, nil

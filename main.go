@@ -61,6 +61,8 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
+	allStars, _ := clientGQL.GetAllStarsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", result.CreatedAt)
+	fmt.Println(allStars)
 
 	result, _ = clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
@@ -68,4 +70,9 @@ func main() {
 
 	jsonData, _ := json.MarshalIndent(result.StarsHistory, "", " ")
 	fmt.Println(string(jsonData))
+
+	allStars, _ = clientGQL.GetAllStarsHistory(ctx, ghRepo, result.CreatedAt)
+	fmt.Println(allStars)
+
+	repostats.WriteStarsHistoryCSV("all-stars-k8s.csv", allStars)
 }
