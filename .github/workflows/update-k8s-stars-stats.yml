@@ -1,8 +1,6 @@
-name: Update Example stats
+name: Update All Stars history K8s stats
 
 on:
-  schedule:
-    - cron: "0 0 * * *" # runs at 00:00 UTC everyday
   workflow_dispatch:
 
 jobs:
@@ -23,11 +21,10 @@ jobs:
         run: go get .
 
       - name: Run
-        working-directory: ./example
+        working-directory: ./all-stars-history-k8s
         run: go run main.go
         env:
           PAT: ${{ secrets.PAT }}
-          FILE_SUFFIX: "latest"
 
       - name: Push generated csv files to the repo
         uses: stefanzweifel/git-auto-commit-action@v4
@@ -36,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: generated-stats-csv
-          path: ./example/*.csv
+          path: ./all-stars-history-k8s/*.csv
