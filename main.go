@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -67,4 +66,7 @@ func main() {
 	result, _ = clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
 	// fmt.Println(result.StarsHistory.StarsTimeline)
+
+	result, _ = clientGQL.GetAllStats(ctx, "istio/istio")
+	fmt.Println(result)
 }
