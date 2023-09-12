@@ -314,6 +314,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 	err := c.query(ctx, &query, variables)
 	if err != nil {
 		log.Printf("%v\n", err)
+		return &result, err
 	}
 	fmt.Println("Desc:", query.Repository.Description)
 	fmt.Println("Total Commit:", query.Repository.DefaultBranchRef.Target.Commit.History.TotalCount)
@@ -338,7 +339,11 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 		result.LastReleaseDate = releases[0].Node.CreatedAt
 	}
 
-	result.StarsHistory, _ = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
+	result.StarsHistory, err = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return &result, err
+	}
 
 	if result.Language == "Go" {
 		GetGoStats(ctx, c.restyClient, ghRepo, &result)
