@@ -23,6 +23,10 @@ https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/ra
 
 https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limits-for-requests-from-github-actions
 
+https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
+
+https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#secondary-rate-limits
+
 
 Contributors/Mentionable users  
 https://stackoverflow.com/questions/46309272/github-graphql-query-for-project-contributors
