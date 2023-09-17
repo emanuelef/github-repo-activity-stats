@@ -17,6 +17,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const LAST_DAYS_HISTORY = 60
+
 var tracer trace.Tracer
 
 func init() {
@@ -173,8 +175,8 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
-	for i := 1; i < 31; i++ {
-		result.StarsTimeline = append(result.StarsTimeline, StarsPerDay{Day: JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
+	for i := 1; i < LAST_DAYS_HISTORY+1; i++ {
+		result.StarsTimeline = append(result.StarsTimeline, StarsPerDay{Day: JSONDay(currentTime.AddDate(0, 0, -(LAST_DAYS_HISTORY - i)).Truncate(24 * time.Hour))})
 	}
 
 	for {
@@ -192,13 +194,13 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 			result.LastStarDate = res[0].StarredAt
 		}
 
-		moreThan30daysFlag := false
+		moreThanHistoryDays := false
 
 		for _, star := range res {
 			days := currentTime.Sub(star.StarredAt).Hours() / 24
 
-			if days > 30 {
-				moreThan30daysFlag = true
+			if days > LAST_DAYS_HISTORY {
+				moreThanHistoryDays = true
 				break
 			}
 
@@ -218,10 +220,10 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 				result.AddedLast30d += 1
 			}
 
-			result.StarsTimeline[29-int(days)].Stars += 1
+			result.StarsTimeline[LAST_DAYS_HISTORY-1-int(days)].Stars += 1
 		}
 
-		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThan30daysFlag {
+		if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage || moreThanHistoryDays {
 			break
 		}
 
