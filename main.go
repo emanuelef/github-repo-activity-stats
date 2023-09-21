@@ -69,4 +69,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "istio/istio")
 	fmt.Println(result)
+
+	resultRateLimit, _ := clientGQL.GetCurrentLimits(ctx)
+	fmt.Printf("Limit: %d, Remaining: %d\n", resultRateLimit.Limit, resultRateLimit.Remaining)
 }

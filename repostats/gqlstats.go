@@ -243,6 +243,39 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	return result, nil
 }
 
+type RateLimit struct {
+	Limit     int
+	Cost      int
+	Remaining int
+	ResetAt   time.Time
+}
+
+func (c *ClientGQL) GetCurrentLimits(ctx context.Context) (*RateLimit, error) {
+	result := RateLimit{}
+
+	var query struct {
+		RateLimit struct {
+			Limit     int
+			Cost      int
+			Remaining int
+			ResetAt   time.Time
+		}
+	}
+
+	err := c.query(ctx, &query, nil)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return &RateLimit{}, err
+	}
+
+	result.Limit = query.RateLimit.Limit
+	result.Cost = query.RateLimit.Cost
+	result.Remaining = query.RateLimit.Remaining
+	result.ResetAt = query.RateLimit.ResetAt
+
+	return &result, nil
+}
+
 func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats, error) {
 	result := RepoStats{}
 
