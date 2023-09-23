@@ -110,7 +110,9 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 
 		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.EndCursor)
 		i++
-		updateChannel <- i
+		if updateChannel != nil {
+			updateChannel <- i
+		}
 	}
 
 	for i, day := range result {
@@ -121,7 +123,9 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 		}
 	}
 
-	close(updateChannel)
+	if updateChannel != nil {
+		close(updateChannel)
+	}
 
 	return result, nil
 }
