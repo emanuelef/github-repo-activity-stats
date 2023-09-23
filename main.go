@@ -60,7 +60,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
-	allStars, _ := clientGQL.GetAllStarsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", result.CreatedAt)
+	allStars, _ := clientGQL.GetAllStarsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", result.CreatedAt, nil)
 	fmt.Println(allStars)
 
 	result, _ = clientGQL.GetAllStats(ctx, ghRepo)

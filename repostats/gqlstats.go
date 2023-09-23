@@ -45,7 +45,7 @@ func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) 
 	return err
 }
 
-func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoCreationDate time.Time) ([]StarsPerDay, error) {
+func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoCreationDate time.Time, updateChannel chan<- int) ([]StarsPerDay, error) {
 	repoSplit := strings.Split(ghRepo, "/")
 
 	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
@@ -86,6 +86,7 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
+	i := 0
 	for {
 		err := c.query(ctx, &queryStars, variablesStars)
 		if err != nil {
@@ -108,6 +109,8 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 		}
 
 		variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.EndCursor)
+		i++
+		updateChannel <- i
 	}
 
 	for i, day := range result {
@@ -117,6 +120,8 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 			result[i].TotalStars = day.Stars
 		}
 	}
+
+	close(updateChannel)
 
 	return result, nil
 }

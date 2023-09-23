@@ -26,7 +26,18 @@ func main() {
 	result, _ := clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
 
-	allStars, _ := clientGQL.GetAllStarsHistory(ctx, ghRepo, result.CreatedAt)
+	updateChannel := make(chan int)
+
+	var allStars []repostats.StarsPerDay
+
+	go func() {
+		allStars, _ = clientGQL.GetAllStarsHistory(ctx, ghRepo, result.CreatedAt, updateChannel)
+	}()
+
+	for progress := range updateChannel {
+		fmt.Printf("Progress: %d\n", progress)
+	}
+
 	repostats.WriteStarsHistoryCSV("all-stars-k8s.csv", allStars)
 
 	elapsed := time.Since(currentTime)
