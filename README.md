@@ -27,6 +27,10 @@ https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=20
 
 https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#secondary-rate-limits
 
+https://github.com/opentofu/opentofu/stargazers
+
+https://github.com/trending
+
 
 Contributors/Mentionable users  
 https://stackoverflow.com/questions/46309272/github-graphql-query-for-project-contributors
