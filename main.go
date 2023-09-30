@@ -72,4 +72,7 @@ func main() {
 
 	resultRateLimit, _ := clientGQL.GetCurrentLimits(ctx)
 	fmt.Printf("Limit: %d, Remaining: %d\n", resultRateLimit.Limit, resultRateLimit.Remaining)
+
+	starsCount, createdAt, _ := clientGQL.GetTotalStars(ctx, "ceccopierangiolieugenio/pyTermTk")
+	fmt.Println(starsCount, createdAt)
 }

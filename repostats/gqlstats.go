@@ -393,3 +393,31 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 
 	return &result, nil
 }
+
+func (c *ClientGQL) GetTotalStars(ctx context.Context, ghRepo string) (int, time.Time, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return -1, time.Time{}, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	variables := map[string]any{
+		"owner": githubv4.String(repoSplit[0]),
+		"name":  githubv4.String(repoSplit[1]),
+	}
+
+	var query struct {
+		Repository struct {
+			StargazerCount int
+			CreatedAt      time.Time
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	err := c.query(ctx, &query, variables)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return 0, time.Time{}, err
+	}
+
+	return query.Repository.StargazerCount, query.Repository.CreatedAt, nil
+}
