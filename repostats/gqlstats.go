@@ -133,6 +133,9 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
 	result := StarsHistory{}
 
+	ctx, span := tracer.Start(ctx, "fetch-all-stars")
+	defer span.End()
+
 	if totalStars == 0 {
 		return result, nil
 	}
