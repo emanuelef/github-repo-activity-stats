@@ -56,9 +56,11 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 	name := repoSplit[1]
 
 	result := []StarsPerDay{}
-	currentTime := time.Now()
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
 	diff := currentTime.Sub(repoCreationDate)
-	days := int(diff.Hours()/24) + 1
+	days := int(diff.Hours()/24 + 1)
 
 	for i := 0; i < days; i++ {
 		result = append(result, StarsPerDay{Day: JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})

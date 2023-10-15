@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
 
@@ -60,8 +61,17 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
+
 	allStars, _ := clientGQL.GetAllStarsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", result.CreatedAt, nil)
-	fmt.Println(allStars)
+	// fmt.Println(allStars)
+	fmt.Println(time.Time(allStars[len(allStars)-1].Day))
+
+	result, _ = clientGQL.GetAllStats(ctx, "dghubble/gologin")
+	fmt.Println(result)
+
+	allStars, _ = clientGQL.GetAllStarsHistory(ctx, "dghubble/gologin", result.CreatedAt, nil)
+	// fmt.Println(allStars)
+	fmt.Println(time.Time(allStars[len(allStars)-1].Day))
 
 	result, _ = clientGQL.GetAllStats(ctx, ghRepo)
 	fmt.Println(result)
