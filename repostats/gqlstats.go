@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -15,12 +17,30 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 )
 
 var tracer trace.Tracer
 
 func init() {
 	tracer = otel.Tracer("github.com/emanuelef/cncf-repos-stats")
+}
+
+type Counter struct {
+	mu      sync.Mutex
+	counter int
+}
+
+func (c *Counter) Increment() {
+	c.mu.Lock()
+	c.counter++
+	c.mu.Unlock()
+}
+
+func (c *Counter) Value() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.counter
 }
 
 type ClientGQL struct {
@@ -251,6 +271,200 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 			result.StarsTimeline[i].TotalStars = totalStars
 		} else {
 			result.StarsTimeline[i].TotalStars = result.StarsTimeline[i+1].TotalStars - result.StarsTimeline[i+1].Stars
+		}
+	}
+
+	return result, nil
+}
+
+func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]StarsPerDay, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	defer func() {
+		if updateChannel != nil {
+			close(updateChannel)
+		}
+	}()
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []StarsPerDay{}
+	counter := &Counter{}
+
+	var resultMutex sync.Mutex
+
+	totalStars, repoCreationDate, err := c.GetTotalStars(ctx, ghRepo)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return result, err
+	}
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24 + 1)
+
+	for i := 0; i < days; i++ {
+		result = append(result, StarsPerDay{Day: JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	type starred struct {
+		StarredAt time.Time
+		Cursor    string
+	}
+
+	processedStars := make(map[string]struct{})
+
+	eg, ctx := errgroup.WithContext(ctx)
+
+	fmt.Printf("Total Stars: %d %d %d %d \n", totalStars, int(math.Ceil(float64(totalStars/2)/100))+1, int(math.Floor(float64(totalStars/2)/100))-1, int(math.Ceil(float64(totalStars)/100)))
+
+	forwardLimit := int(math.Ceil(float64(totalStars/2)/100)) + 1
+	backwardLimit := int(math.Floor(float64(totalStars/2) / 100))
+
+	if totalStars < 300 {
+		forwardLimit = int(math.Floor(float64(totalStars)/100)) + 1
+		backwardLimit = int(math.Ceil(float64(totalStars/2)/100)) + 1
+	}
+
+	eg.Go(func() error {
+		variablesStars := map[string]any{
+			"owner":       githubv4.String(owner),
+			"name":        githubv4.String(name),
+			"starsCursor": (*githubv4.String)(nil),
+		}
+
+		var queryStars struct {
+			Repository struct {
+				Stargazers struct {
+					Edges    []starred
+					PageInfo struct {
+						EndCursor   githubv4.String
+						HasNextPage bool
+					}
+				} `graphql:"stargazers(first: 100, after: $starsCursor)"`
+			} `graphql:"repository(owner: $owner, name: $name)"`
+		}
+
+		for i := 0; i < forwardLimit; i++ {
+			err := c.query(ctx, &queryStars, variablesStars)
+			if err != nil {
+				fmt.Printf("F %d %v\n", i, err)
+				return err
+			}
+
+			res := queryStars.Repository.Stargazers.Edges
+
+			if len(res) == 0 {
+				break
+			}
+
+			resultMutex.Lock()
+			for _, star := range res {
+				starID := star.Cursor
+				if _, ok := processedStars[starID]; !ok {
+					processedStars[starID] = struct{}{}
+					days := star.StarredAt.Sub(repoCreationDate).Hours() / 24
+					result[int(days)].Stars++
+				}
+			}
+			resultMutex.Unlock()
+
+			if !queryStars.Repository.Stargazers.PageInfo.HasNextPage {
+				break
+			}
+
+			variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.EndCursor)
+
+			counter.Increment()
+
+			if updateChannel != nil {
+				updateChannel <- counter.Value()
+			}
+		}
+		return nil
+	})
+
+	eg.Go(func() error {
+		variablesStars := map[string]any{
+			"owner":       githubv4.String(owner),
+			"name":        githubv4.String(name),
+			"starsCursor": (*githubv4.String)(nil),
+		}
+
+		var queryStars struct {
+			Repository struct {
+				Stargazers struct {
+					Edges    []starred
+					PageInfo struct {
+						StartCursor     githubv4.String
+						HasPreviousPage bool
+					}
+				} `graphql:"stargazers(last: 100, before: $starsCursor)"`
+			} `graphql:"repository(owner: $owner, name: $name)"`
+		}
+
+		for i := 0; i < backwardLimit; i++ {
+			err := c.query(ctx, &queryStars, variablesStars)
+			if err != nil {
+				fmt.Printf("B %d %v\n", i, err)
+				starsCursor := ""
+				if v, ok := variablesStars["starsCursor"].(*githubv4.String); ok {
+					starsCursor = string(*v)
+				}
+
+				fmt.Println(starsCursor)
+				return err
+			}
+
+			res := queryStars.Repository.Stargazers.Edges
+
+			if len(res) == 0 {
+				break
+			}
+
+			resultMutex.Lock()
+			for _, star := range res {
+				starID := star.Cursor
+				if _, ok := processedStars[starID]; !ok {
+					processedStars[starID] = struct{}{}
+					days := star.StarredAt.Sub(repoCreationDate).Hours() / 24
+					result[int(days)].Stars++
+				}
+			}
+			resultMutex.Unlock()
+
+			if !queryStars.Repository.Stargazers.PageInfo.HasPreviousPage {
+				break
+			}
+
+			variablesStars["starsCursor"] = githubv4.NewString(queryStars.Repository.Stargazers.PageInfo.StartCursor)
+
+			counter.Increment()
+
+			if updateChannel != nil {
+				updateChannel <- counter.Value()
+			}
+		}
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		// Handle the first error that occurred.
+		log.Printf("An error occurred: %v", err)
+		return result, err
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalStars = result[i-1].TotalStars + day.Stars
+		} else {
+			result[i].TotalStars = day.Stars
 		}
 	}
 

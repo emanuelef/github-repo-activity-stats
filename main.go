@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
@@ -59,12 +60,25 @@ func main() {
 
 	ctx := context.Background()
 
-	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
+	// repoTest := "kubernetes/kubernetes"
+	// repoTest := "agnivade/levenshtein"
+	repoTest := "mattn/go-colorable"
+
+	result, _ = clientGQL.GetAllStats(ctx, repoTest)
 	fmt.Println(result)
 
-	allStars, _ := clientGQL.GetAllStarsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", result.CreatedAt, nil)
+	allStars, _ := clientGQL.GetAllStarsHistory(ctx, repoTest, result.CreatedAt, nil)
 	// fmt.Println(allStars)
 	fmt.Println(time.Time(allStars[len(allStars)-1].Day))
+
+	allStars2, _ := clientGQL.GetAllStarsHistoryTwoWays(ctx, repoTest, nil)
+	fmt.Println("Equal Stars", slices.Equal(allStars, allStars2))
+
+	for i, val := range allStars {
+		if val.Stars != allStars2[i].Stars || val.TotalStars != allStars2[i].TotalStars {
+			fmt.Println("Not Equal", i, val.Stars, allStars2[i].Stars, val.TotalStars, allStars2[i].TotalStars)
+		}
+	}
 
 	result, _ = clientGQL.GetAllStats(ctx, "dghubble/gologin")
 	fmt.Println(result)
@@ -77,8 +91,10 @@ func main() {
 	fmt.Println(result)
 	// fmt.Println(result.StarsHistory.StarsTimeline)
 
-	result, _ = clientGQL.GetAllStats(ctx, "istio/istio")
-	fmt.Println(result)
+	/*
+		result, _ = clientGQL.GetAllStats(ctx, "istio/istio")
+		fmt.Println(result)
+	*/
 
 	resultRateLimit, _ := clientGQL.GetCurrentLimits(ctx)
 	fmt.Printf("Limit: %d, Remaining: %d\n", resultRateLimit.Limit, resultRateLimit.Remaining)
