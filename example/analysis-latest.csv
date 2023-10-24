@@ -1,4 +1,4 @@
 repo,stars,new-stars-last-30d,new-stars-last-14d,new-stars-last-7d,new-stars-last-24H,stars-per-mille-0d,language,archived,dependencies
-go-resty/resty,8537,146,64,25,1,17.102,Go,false,2
-temporalio/temporal,8285,180,87,40,3,21.726,Go,false,65
-kubernetes/kubernetes,102412,746,378,169,20,7.284,Go,false,120
+go-resty/resty,8538,144,62,20,3,16.866,Go,false,2
+temporalio/temporal,8289,180,83,41,5,21.716,Go,false,65
+kubernetes/kubernetes,102427,748,379,162,24,7.303,Go,false,120
