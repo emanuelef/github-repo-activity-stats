@@ -1,6 +1,6 @@
 module github.com/emanuelef/github-repo-activity-stats
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/go-resty/resty/v2 v2.10.0

@@ -32,7 +32,7 @@ func main() {
 
 	go func() {
 		allStars, _ = clientGQL.GetAllStarsHistoryTwoWays(ctx, ghRepo, updateChannel)
-		//allStars, _ = clientGQL.GetAllStarsHistory(ctx, ghRepo, result.CreatedAt, updateChannel)
+		// allStars, _ = clientGQL.GetAllStarsHistory(ctx, ghRepo, result.CreatedAt, updateChannel)
 	}()
 
 	for progress := range updateChannel {
