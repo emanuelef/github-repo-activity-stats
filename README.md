@@ -12,7 +12,11 @@ This Go library provides functionalities to fetch statistics and insights about 
 
 ## Introduction
 
-Have you ever needed to analyze and gather statistics on GitHub repositories programmatically? This library is designed to help you with just that. It's written in Go and provides convenient functions to obtain various statistics about a GitHub repository.
+Have you ever needed to analyze and gather statistics on GitHub repositories programmatically? This library is designed to help you with just that. It's written in Go and provides convenient functions to obtain various statistics about a GitHub repository.   
+This can be helpful when analysing a series of repos, it is currently used in:
+- [gh-repo-stats-server](https://github.com/emanuelef/gh-repo-stats-server): Get full star history of a repo
+- [awesome-go-repo-stats](https://github.com/emanuelef/awesome-go-repo-stats): Stats about repos in [awesome-go](https://github.com/avelino/awesome-go)
+- [cncf-repos-stats](https://github.com/emanuelef/cncf-repos-stats): Stats about repo in CNCF
 
 ## Getting Started
 
