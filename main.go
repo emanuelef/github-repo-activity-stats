@@ -101,4 +101,7 @@ func main() {
 
 	starsCount, createdAt, _ := clientGQL.GetTotalStars(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(starsCount, createdAt)
+
+	result, _ = clientGQL.GetAllStats(ctx, "surrealdb/surrealdb")
+	fmt.Println(result)
 }

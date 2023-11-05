@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emanuelef/github-repo-activity-stats/deps"
+	"github.com/emanuelef/github-repo-activity-stats/stats"
 	"github.com/go-resty/resty/v2"
 	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -65,7 +67,7 @@ func (c *ClientGQL) query(ctx context.Context, q any, variables map[string]any) 
 	return err
 }
 
-func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoCreationDate time.Time, updateChannel chan<- int) ([]StarsPerDay, error) {
+func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoCreationDate time.Time, updateChannel chan<- int) ([]stats.StarsPerDay, error) {
 	repoSplit := strings.Split(ghRepo, "/")
 
 	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
@@ -75,7 +77,7 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 	owner := repoSplit[0]
 	name := repoSplit[1]
 
-	result := []StarsPerDay{}
+	result := []stats.StarsPerDay{}
 
 	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
 	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
@@ -83,7 +85,7 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 	days := int(diff.Hours()/24 + 1)
 
 	for i := 0; i < days; i++ {
-		result = append(result, StarsPerDay{Day: JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+		result = append(result, stats.StarsPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
 	}
 
 	variablesStars := map[string]any{
@@ -152,8 +154,8 @@ func (c *ClientGQL) GetAllStarsHistory(ctx context.Context, ghRepo string, repoC
 	return result, nil
 }
 
-func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (StarsHistory, error) {
-	result := StarsHistory{}
+func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, totalStars int) (stats.StarsHistory, error) {
+	result := stats.StarsHistory{}
 
 	ctx, span := tracer.Start(ctx, "fetch-all-stars")
 	defer span.End()
@@ -208,7 +210,7 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	}
 
 	for i := 1; i < 31; i++ {
-		result.StarsTimeline = append(result.StarsTimeline, StarsPerDay{Day: JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
+		result.StarsTimeline = append(result.StarsTimeline, stats.StarsPerDay{Day: stats.JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
 	}
 
 	for {
@@ -277,7 +279,7 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	return result, nil
 }
 
-func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]StarsPerDay, error) {
+func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.StarsPerDay, error) {
 	repoSplit := strings.Split(ghRepo, "/")
 
 	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
@@ -293,7 +295,7 @@ func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string
 	owner := repoSplit[0]
 	name := repoSplit[1]
 
-	result := []StarsPerDay{}
+	result := []stats.StarsPerDay{}
 	counter := &Counter{}
 
 	var resultMutex sync.Mutex
@@ -310,7 +312,7 @@ func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string
 	days := int(diff.Hours()/24 + 1)
 
 	for i := 0; i < days; i++ {
-		result = append(result, StarsPerDay{Day: JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+		result = append(result, stats.StarsPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
 	}
 
 	type starred struct {
@@ -504,8 +506,8 @@ func (c *ClientGQL) GetCurrentLimits(ctx context.Context) (*RateLimit, error) {
 	return &result, nil
 }
 
-func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats, error) {
-	result := RepoStats{}
+func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.RepoStats, error) {
+	result := stats.RepoStats{}
 
 	ctx, span := tracer.Start(ctx, "fetch-repo-stats")
 	defer span.End()
@@ -609,6 +611,9 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*RepoStats,
 	if result.Language == "Go" {
 		GetGoStats(ctx, c.restyClient, ghRepo, &result)
 	}
+
+	depFetcher := deps.CreateFetcher(result.Language)
+	depFetcher.GetDepsList(ctx, c.restyClient, ghRepo, &result)
 
 	return &result, nil
 }

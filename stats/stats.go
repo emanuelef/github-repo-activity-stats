@@ -1,4 +1,4 @@
-package repostats
+package stats
 
 import (
 	"encoding/json"

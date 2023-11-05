@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/emanuelef/github-repo-activity-stats/stats"
 )
 
-func WriteStarsHistoryCSV(filename string, history []StarsPerDay) {
+func WriteStarsHistoryCSV(filename string, history []stats.StarsPerDay) {
 	outputFile, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)

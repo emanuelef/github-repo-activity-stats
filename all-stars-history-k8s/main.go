@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
+	"github.com/emanuelef/github-repo-activity-stats/stats"
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
 )
@@ -28,7 +29,7 @@ func main() {
 
 	updateChannel := make(chan int)
 
-	var allStars []repostats.StarsPerDay
+	var allStars []stats.StarsPerDay
 
 	go func() {
 		allStars, _ = clientGQL.GetAllStarsHistoryTwoWays(ctx, ghRepo, updateChannel)

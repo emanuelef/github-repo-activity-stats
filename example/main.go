@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emanuelef/github-repo-activity-stats/repostats"
+	"github.com/emanuelef/github-repo-activity-stats/stats"
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/semaphore"
@@ -22,7 +23,7 @@ func main() {
 	sem := semaphore.NewWeighted(10)
 	var wg sync.WaitGroup
 
-	starsHistory := map[string][]repostats.StarsPerDay{}
+	starsHistory := map[string][]stats.StarsPerDay{}
 
 	ctx := context.Background()
 

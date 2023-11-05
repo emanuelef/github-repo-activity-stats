@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/joho/godotenv v1.5.1
+	github.com/pelletier/go-toml v1.9.5
 	github.com/shurcooL/githubv4 v0.0.0-20230704064427-599ae7bbf278
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
 	go.opentelemetry.io/otel v1.19.0

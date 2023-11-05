@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/emanuelef/github-repo-activity-stats/stats"
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/mod/modfile"
 )
@@ -29,11 +30,11 @@ func NewClient(transport *http.RoundTripper) *Client {
 	return &Client{restyClient: restyClient}
 }
 
-func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, error) {
+func (c *Client) getStarsHistory(ghRepo string, totalStars int) (stats.StarsHistory, error) {
 	// https://api.github.com/repos/temporalio/temporal/stargazers?per_page=100&page=80
 	// Accept: application/vnd.github.star+json
 
-	result := StarsHistory{}
+	result := stats.StarsHistory{}
 
 	res := [](map[string]any){}
 	restyReq := c.restyClient.R().SetResult(&res).SetHeader("Accept", "application/vnd.github.star+json")
@@ -108,7 +109,7 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (StarsHistory, e
 	return result, nil
 }
 
-func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, result *RepoStats) error {
+func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, result *stats.RepoStats) error {
 	goModUrl := fmt.Sprintf("%s/%s/%s/go.mod", rawGHUrl, ghRepo, result.DefaultBranch)
 
 	restyReq := restyClient.R()
@@ -140,7 +141,7 @@ func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, r
 	return nil
 }
 
-func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
+func (c *Client) GetAllStats(ghRepo string) (*stats.RepoStats, error) {
 	res := make(map[string]any)
 	restyReq := c.restyClient.R().SetResult(&res)
 
@@ -161,7 +162,7 @@ func (c *Client) GetAllStats(ghRepo string) (*RepoStats, error) {
 		language = ""
 	}
 
-	result := RepoStats{
+	result := stats.RepoStats{
 		GHPath:        ghRepo,
 		Stars:         int(res["stargazers_count"].(float64)),
 		Size:          int(res["size"].(float64)),
