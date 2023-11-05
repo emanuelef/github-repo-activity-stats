@@ -107,4 +107,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "fractalide/fractalide")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "chaosprint/glicol")
+	fmt.Println(result)
 }

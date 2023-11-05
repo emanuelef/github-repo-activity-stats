@@ -3,7 +3,6 @@ package deps
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/emanuelef/github-repo-activity-stats/stats"
 	"github.com/go-resty/resty/v2"
@@ -26,7 +25,7 @@ func (gdf RustDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty.C
 	if err == nil {
 		cfg, err := toml.Load(string(resp.Body()))
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		var directDeps []string
