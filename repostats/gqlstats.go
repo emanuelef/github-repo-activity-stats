@@ -612,8 +612,9 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		GetGoStats(ctx, c.restyClient, ghRepo, &result)
 	}
 
-	depFetcher := deps.CreateFetcher(result.Language)
-	depFetcher.GetDepsList(ctx, c.restyClient, ghRepo, &result)
+	if depFetcher := deps.CreateFetcher(result.Language); depFetcher != nil {
+		depFetcher.GetDepsList(ctx, c.restyClient, ghRepo, &result)
+	}
 
 	return &result, nil
 }

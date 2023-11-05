@@ -104,4 +104,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "surrealdb/surrealdb")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "fractalide/fractalide")
+	fmt.Println(result)
 }
