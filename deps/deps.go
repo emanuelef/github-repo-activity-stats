@@ -24,6 +24,6 @@ func CreateFetcher(lang string) DepsFetcher {
 	case "rust":
 		return RustDepsFetcher{}
 	default:
-		return nil
+		return GoDepsFetcher{}
 	}
 }

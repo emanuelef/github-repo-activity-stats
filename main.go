@@ -110,4 +110,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "chaosprint/glicol")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "gen2brain/malgo")
+	fmt.Println(result)
 }
