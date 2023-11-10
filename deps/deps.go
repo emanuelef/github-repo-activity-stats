@@ -23,6 +23,8 @@ func CreateFetcher(lang string) DepsFetcher {
 		return GoDepsFetcher{}
 	case "rust":
 		return RustDepsFetcher{}
+	case "javascript":
+		return JavascriptDepsFetcher{}
 	default:
 		return GoDepsFetcher{}
 	}

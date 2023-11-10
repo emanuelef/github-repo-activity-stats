@@ -113,4 +113,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "gen2brain/malgo")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "winstonjs/winston")
+	fmt.Println(result)
 }
