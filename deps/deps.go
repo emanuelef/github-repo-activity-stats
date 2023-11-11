@@ -25,6 +25,8 @@ func CreateFetcher(lang string) DepsFetcher {
 		return RustDepsFetcher{}
 	case "javascript":
 		return JavascriptDepsFetcher{}
+	case "python":
+		return PythonDepsFetcher{}
 	default:
 		return GoDepsFetcher{}
 	}

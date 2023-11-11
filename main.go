@@ -116,4 +116,10 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "winstonjs/winston")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "encode/uvicorn")
+	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "copier-org/copier")
+	fmt.Println(result)
 }
