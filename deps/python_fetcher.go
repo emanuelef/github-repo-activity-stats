@@ -68,6 +68,32 @@ func (gdf PythonDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty
 		}
 	}
 
+	setupUrl := fmt.Sprintf("%s/%s/%s/setup.py", rawGHUrl, ghRepo, result.DefaultBranch)
+
+	resp, err = restyReq.Get(setupUrl)
+
+	if resp.IsSuccess() && err == nil {
+		reader := bytes.NewReader([]byte(resp.Body()))
+		scanner := bufio.NewScanner(reader)
+
+		dependencyRegex := regexp.MustCompile(`^\s*'([a-zA-Z0-9_-]+)'(?:[,)]|$)`)
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			// Match the line against the regex
+			match := dependencyRegex.FindStringSubmatch(line)
+			if len(match) >= 2 {
+				dependencyName := match[1]
+				directDeps = append(directDeps, strings.ToLower(dependencyName))
+			}
+		}
+
+		// Check for errors during scanning
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+	}
+
 	result.DirectDeps = directDeps
 
 	return nil

@@ -122,4 +122,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "copier-org/copier")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "httpie/cli")
+	fmt.Println(result)
 }
