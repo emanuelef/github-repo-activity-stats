@@ -41,7 +41,7 @@ func (gdf PythonDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty
 				re := regexp.MustCompile(`^([a-zA-Z0-9_-]+)[^a-zA-Z0-9_-]`)
 				match := re.FindStringSubmatch(line)
 				if len(match) >= 2 {
-					directDeps = append(directDeps, match[1])
+					directDeps = append(directDeps, strings.ToLower(match[1]))
 				}
 			}
 		}
@@ -63,7 +63,7 @@ func (gdf PythonDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty
 
 		if depSection, ok := cfg.Get("tool.poetry.dependencies").(*toml.Tree); ok {
 			for name := range depSection.ToMap() {
-				directDeps = append(directDeps, name)
+				directDeps = append(directDeps, strings.ToLower(name))
 			}
 		}
 	}
@@ -84,6 +84,40 @@ func (gdf PythonDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty
 			match := dependencyRegex.FindStringSubmatch(line)
 			if len(match) >= 2 {
 				dependencyName := match[1]
+				directDeps = append(directDeps, strings.ToLower(dependencyName))
+			}
+		}
+
+		// Check for errors during scanning
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+	}
+
+	pipfileUrl := fmt.Sprintf("%s/%s/%s/Pipfile", rawGHUrl, ghRepo, result.DefaultBranch)
+
+	resp, err = restyReq.Get(pipfileUrl)
+
+	if resp.IsSuccess() && err == nil {
+		reader := bytes.NewReader([]byte(resp.Body()))
+		scanner := bufio.NewScanner(reader)
+
+		dependencyRegex := regexp.MustCompile(`\b([\w\d_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s]+))`)
+		currentSection := ""
+
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+
+			// Check if the line contains a section header
+			if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+				currentSection = line[1 : len(line)-1]
+				continue
+			}
+
+			// Check if the line contains a dependency
+			matches := dependencyRegex.FindStringSubmatch(line)
+			if len(matches) >= 2 && (currentSection == "dev-packages" || currentSection == "packages") {
+				dependencyName := matches[1]
 				directDeps = append(directDeps, strings.ToLower(dependencyName))
 			}
 		}

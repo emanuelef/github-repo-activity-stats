@@ -114,15 +114,23 @@ func main() {
 	result, _ = clientGQL.GetAllStats(ctx, "gen2brain/malgo")
 	fmt.Println(result)
 
+	// package.json
 	result, _ = clientGQL.GetAllStats(ctx, "winstonjs/winston")
 	fmt.Println(result)
 
+	// requirements.txt
 	result, _ = clientGQL.GetAllStats(ctx, "encode/uvicorn")
 	fmt.Println(result)
 
+	// poetry pyproject.toml
 	result, _ = clientGQL.GetAllStats(ctx, "copier-org/copier")
 	fmt.Println(result)
 
+	// setup.py
 	result, _ = clientGQL.GetAllStats(ctx, "httpie/cli")
+	fmt.Println(result)
+
+	// pipenv Pipfile
+	result, _ = clientGQL.GetAllStats(ctx, "zappa/Zappa")
 	fmt.Println(result)
 }
