@@ -1,7 +1,6 @@
 package repostats
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/emanuelef/github-repo-activity-stats/stats"
 	"github.com/go-resty/resty/v2"
-	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -109,38 +107,6 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (stats.StarsHist
 	return result, nil
 }
 
-func GetGoStats(ctx context.Context, restyClient *resty.Client, ghRepo string, result *stats.RepoStats) error {
-	goModUrl := fmt.Sprintf("%s/%s/%s/go.mod", rawGHUrl, ghRepo, result.DefaultBranch)
-
-	restyReq := restyClient.R()
-	restyReq.SetContext(ctx)
-	resp, err := restyReq.Get(goModUrl)
-
-	if err == nil {
-		f, err := modfile.Parse("go.mod", resp.Body(), nil)
-		if err != nil {
-			return nil
-		}
-
-		if f.Go != nil {
-			result.GoVersion = f.Go.Version
-		}
-
-		var directDeps []string
-
-		for _, req := range f.Require {
-			// only direct dependencies
-			if !req.Indirect {
-				directDeps = append(directDeps, req.Mod.Path)
-			}
-		}
-
-		result.DirectDeps = directDeps
-	}
-
-	return nil
-}
-
 func (c *Client) GetAllStats(ghRepo string) (*stats.RepoStats, error) {
 	res := make(map[string]any)
 	restyReq := c.restyClient.R().SetResult(&res)
@@ -174,11 +140,6 @@ func (c *Client) GetAllStats(ghRepo string) (*stats.RepoStats, error) {
 	}
 
 	result.StarsHistory, _ = c.getStarsHistory(ghRepo, result.Stars)
-
-	// get go.mod file
-	if result.Language == "Go" {
-		GetGoStats(context.Background(), c.restyClient, ghRepo, &result)
-	}
 
 	return &result, nil
 }
