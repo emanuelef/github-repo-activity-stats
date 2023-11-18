@@ -626,16 +626,22 @@ func getLivenessScore(ctx context.Context, restyClient *resty.Client, ghRepo str
 
 		switch {
 		case days <= 1:
-			score += 30
+			score += 50
+			break
+		case days <= 3:
+			score += 40
 			break
 		case days < 7:
-			score += 10
+			score += 30
 			break
 		case days < 14:
-			score += 5
+			score += 20
 			break
 		case days < 30:
-			score += 2
+			score += 10
+			break
+		case days < 60:
+			score += 6
 			break
 		}
 	}
@@ -660,11 +666,26 @@ func getLivenessScore(ctx context.Context, restyClient *resty.Client, ghRepo str
 	}
 
 	switch {
-	case result.AddedLast14d > 30:
+	case result.AddedLast30d > 20:
+		score += 10
+		break
+	case result.AddedLast30d > 10:
+		score += 6
+		break
+	case result.AddedLast30d > 1:
+		score += 2
+		break
+	}
+
+	switch {
+	case result.AddedLast14d > 50:
 		score += 30
 		break
-	case result.AddedLast14d > 20:
+	case result.AddedLast14d > 30:
 		score += 20
+		break
+	case result.AddedLast14d > 20:
+		score += 10
 		break
 	case result.AddedLast14d > 5:
 		score += 5

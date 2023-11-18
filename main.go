@@ -67,6 +67,9 @@ func main() {
 	result, _ = clientGQL.GetAllStats(ctx, repoTest)
 	fmt.Println(result)
 
+	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
+	fmt.Println(result)
+
 	allStars, _ := clientGQL.GetAllStarsHistory(ctx, repoTest, result.CreatedAt, nil)
 	// fmt.Println(allStars)
 	fmt.Println(time.Time(allStars[len(allStars)-1].Day))
