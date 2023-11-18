@@ -30,7 +30,7 @@ jobs:
           FILE_SUFFIX: "latest"
 
       - name: Push generated csv files to the repo
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
 
       - name: Archive csv results
         uses: actions/upload-artifact@v3
