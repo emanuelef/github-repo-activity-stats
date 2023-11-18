@@ -65,6 +65,7 @@ type RepoStats struct {
 	CreatedAt        time.Time
 	LastCommitDate   time.Time
 	LastReleaseDate  time.Time
+	LivenessScore    float32
 	StarsHistory
 	GoRepo
 }
@@ -84,6 +85,7 @@ Archived: %t
 Mentionable Users: %d
 Default Branch: %s
 %s
+Liveness Score: %.2f
 Go version: %s
 Go Direct dependencies: %d
 	`, rs.GHPath,
@@ -99,6 +101,7 @@ Go Direct dependencies: %d
 		rs.MentionableUsers,
 		rs.DefaultBranch,
 		rs.StarsHistory,
+		rs.LivenessScore,
 		rs.GoVersion,
 		len(rs.DirectDeps))
 }

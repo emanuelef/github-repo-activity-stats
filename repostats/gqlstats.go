@@ -612,7 +612,85 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		depFetcher.GetDepsList(ctx, c.restyClient, ghRepo, &result)
 	}
 
+	getLivenessScore(ctx, c.restyClient, ghRepo, &result)
+
 	return &result, nil
+}
+
+func getLivenessScore(ctx context.Context, restyClient *resty.Client, ghRepo string, result *stats.RepoStats) {
+	score := float32(0.0)
+
+	// calculate days since last commit
+	if !result.LastCommitDate.IsZero() {
+		days := time.Now().Sub(result.LastCommitDate).Hours() / 24
+
+		switch {
+		case days <= 1:
+			score += 30
+			break
+		case days < 7:
+			score += 10
+			break
+		case days < 14:
+			score += 5
+			break
+		case days < 30:
+			score += 2
+			break
+		}
+	}
+
+	// calculate days since last star
+	if !result.LastStarDate.IsZero() {
+		days := time.Now().Sub(result.LastStarDate).Hours() / 24
+		switch {
+		case days <= 1:
+			score += 20
+			break
+		case days < 7:
+			score += 10
+			break
+		case days < 14:
+			score += 5
+			break
+		case days < 30:
+			score += 2
+			break
+		}
+	}
+
+	switch {
+	case result.AddedLast14d > 30:
+		score += 30
+		break
+	case result.AddedLast14d > 20:
+		score += 20
+		break
+	case result.AddedLast14d > 5:
+		score += 5
+		break
+	}
+
+	switch {
+	case result.AddedLast24H > 30:
+		score += 10
+		break
+	case result.AddedLast24H > 20:
+		score += 5
+		break
+	case result.AddedLast24H > 5:
+		score += 2
+		break
+	}
+
+	if result.Archived {
+		score -= 30
+	}
+
+	// score should be between 0 and 100
+	score = float32(math.Max(0, math.Min(100, float64(score))))
+
+	result.LivenessScore = score
 }
 
 func (c *ClientGQL) GetTotalStars(ctx context.Context, ghRepo string) (int, time.Time, error) {
