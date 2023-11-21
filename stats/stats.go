@@ -24,6 +24,12 @@ type StarsPerDay struct {
 	TotalStars int
 }
 
+type CommitsPerDay struct {
+	Day          JSONDay
+	Stars        int
+	TotalCommits int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
@@ -36,6 +42,16 @@ type StarsHistory struct {
 	LastStarDate     time.Time
 	AddedPerMille30d float32
 	StarsTimeline    []StarsPerDay
+}
+
+type CommitsHistory struct {
+	AddedLast24H     int
+	AddedLast7d      int
+	AddedLast14d     int
+	AddedLast30d     int
+	LastCommitDate   time.Time
+	AddedPerMille30d float32
+	CommitsTimeline  []CommitsPerDay
 }
 
 func (sh StarsHistory) String() string {
@@ -55,6 +71,7 @@ Stars AddedPerMille30d: %.2f`, sh.LastStarDate,
 type RepoStats struct {
 	GHPath           string
 	Stars            int
+	Commits          int
 	Size             int
 	Language         string
 	OpenIssues       int
@@ -67,6 +84,7 @@ type RepoStats struct {
 	LastReleaseDate  time.Time
 	LivenessScore    float32
 	StarsHistory
+	CommitsHistory
 	GoRepo
 }
 

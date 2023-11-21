@@ -279,6 +279,120 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 	return result, nil
 }
 
+func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name string, totalCommits int) (stats.CommitsHistory, error) {
+	result := stats.CommitsHistory{}
+
+	ctx, span := tracer.Start(ctx, "fetch-short-commits")
+	defer span.End()
+
+	if totalCommits == 0 {
+		return result, nil
+	}
+
+	currentTime := time.Now()
+
+	variablesCommits := map[string]any{
+		"owner":         githubv4.String(owner),
+		"name":          githubv4.String(name),
+		"commitsCursor": (*githubv4.String)(nil),
+	}
+
+	type commit struct {
+		Node struct {
+			CommittedDate time.Time
+			Additions     int
+		}
+	}
+
+	var queryCommits struct {
+		Repository struct {
+			DefaultBranchRef struct {
+				Name   string
+				Target struct {
+					Commit struct {
+						History struct {
+							Edges    []commit
+							PageInfo struct {
+								StartCursor     githubv4.String
+								HasPreviousPage bool
+							}
+						} `graphql:"history(last: 100, before: $commitsCursor)"`
+					} `graphql:"... on Commit"`
+				}
+			}
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for i := 1; i < 31; i++ {
+		result.CommitsTimeline = append(result.CommitsTimeline, stats.CommitsPerDay{Day: stats.JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
+	}
+
+	for {
+		err := c.query(ctx, &queryCommits, variablesCommits)
+		if err != nil {
+			return result, err
+		}
+
+		// fmt.Println("Desc:", len(queryStars.Repository.Stargazers.Edges))
+
+		res := queryCommits.Repository.DefaultBranchRef.Target.Commit.History.Edges
+		slices.Reverse(res) // order from most recent to least
+
+		if len(res) > 0 && result.LastCommitDate.IsZero() {
+			result.LastCommitDate = res[0].Node.CommittedDate
+		}
+
+		moreThan30daysFlag := false
+
+		for _, star := range res {
+			days := currentTime.Sub(star.Node.CommittedDate).Hours() / 24
+
+			if days > 30 {
+				moreThan30daysFlag = true
+				break
+			}
+
+			if days <= 1 {
+				result.AddedLast24H += 1
+			}
+
+			if days <= 7 {
+				result.AddedLast7d += 1
+			}
+
+			if days <= 14 {
+				result.AddedLast14d += 1
+			}
+
+			if days <= 30 {
+				result.AddedLast30d += 1
+			}
+
+			result.CommitsTimeline[29-int(days)].Stars += 1
+		}
+
+		if !queryCommits.Repository.DefaultBranchRef.Target.Commit.History.PageInfo.HasPreviousPage || moreThan30daysFlag {
+			break
+		}
+
+		variablesCommits["commitsCursor"] = githubv4.NewString(queryCommits.Repository.DefaultBranchRef.Target.Commit.History.PageInfo.StartCursor)
+	}
+
+	if totalCommits > 0 {
+		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalCommits))
+	}
+
+	for i := len(result.CommitsTimeline) - 1; i >= 0; i-- {
+		if i == len(result.CommitsTimeline)-1 {
+			result.CommitsTimeline[i].TotalCommits = totalCommits
+		} else {
+			result.CommitsTimeline[i].TotalCommits = result.CommitsTimeline[i+1].TotalCommits - result.CommitsTimeline[i+1].Stars
+		}
+	}
+
+	return result, nil
+}
+
 func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.StarsPerDay, error) {
 	repoSplit := strings.Split(ghRepo, "/")
 
@@ -585,6 +699,7 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 	result.GHPath = ghRepo
 	result.CreatedAt = query.Repository.CreatedAt
 	result.Stars = query.Repository.StargazerCount
+	result.Commits = query.Repository.DefaultBranchRef.Target.Commit.History.TotalCount
 	result.DefaultBranch = query.Repository.DefaultBranchRef.Name
 	result.Archived = query.Repository.IsArchived
 	result.Forks = query.Repository.ForkCount
@@ -602,7 +717,15 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		result.LastReleaseDate = releases[0].Node.CreatedAt
 	}
 
+	// 30d stars history
 	result.StarsHistory, err = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return &result, err
+	}
+
+	// 30d commits history
+	result.CommitsHistory, err = c.getCommitsShortHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
 	if err != nil {
 		log.Printf("%v\n", err)
 		return &result, err
@@ -666,40 +789,40 @@ func getLivenessScore(ctx context.Context, restyClient *resty.Client, ghRepo str
 	}
 
 	switch {
-	case result.AddedLast30d > 20:
+	case result.StarsHistory.AddedLast30d > 20:
 		score += 10
 		break
-	case result.AddedLast30d > 10:
+	case result.StarsHistory.AddedLast30d > 10:
 		score += 6
 		break
-	case result.AddedLast30d > 1:
+	case result.StarsHistory.AddedLast30d > 1:
 		score += 2
 		break
 	}
 
 	switch {
-	case result.AddedLast14d > 50:
+	case result.StarsHistory.AddedLast14d > 50:
 		score += 30
 		break
-	case result.AddedLast14d > 30:
+	case result.StarsHistory.AddedLast14d > 30:
 		score += 20
 		break
-	case result.AddedLast14d > 20:
+	case result.StarsHistory.AddedLast14d > 20:
 		score += 10
 		break
-	case result.AddedLast14d > 5:
+	case result.StarsHistory.AddedLast14d > 5:
 		score += 5
 		break
 	}
 
 	switch {
-	case result.AddedLast24H > 30:
+	case result.StarsHistory.AddedLast24H > 30:
 		score += 10
 		break
-	case result.AddedLast24H > 20:
+	case result.StarsHistory.AddedLast24H > 20:
 		score += 5
 		break
-	case result.AddedLast24H > 5:
+	case result.StarsHistory.AddedLast24H > 5:
 		score += 2
 		break
 	}
