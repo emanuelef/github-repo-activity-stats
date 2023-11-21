@@ -54,6 +54,20 @@ type CommitsHistory struct {
 	CommitsTimeline  []CommitsPerDay
 }
 
+func (sh CommitsHistory) String() string {
+	return fmt.Sprintf(`Last Commit Date: %s
+Commits AddedLast24H: %d
+Commits AddedLast7d: %d
+Commits AddedLast14d: %d
+Commits AddedLast30d: %d
+Commits AddedPerMille30d: %.2f`, sh.LastCommitDate,
+		sh.AddedLast24H,
+		sh.AddedLast7d,
+		sh.AddedLast14d,
+		sh.AddedLast30d,
+		sh.AddedPerMille30d)
+}
+
 func (sh StarsHistory) String() string {
 	return fmt.Sprintf(`Last Star Date: %s
 Stars AddedLast24H: %d
@@ -103,6 +117,7 @@ Archived: %t
 Mentionable Users: %d
 Default Branch: %s
 %s
+%s
 Liveness Score: %.2f
 Go version: %s
 Go Direct dependencies: %d
@@ -119,6 +134,7 @@ Go Direct dependencies: %d
 		rs.MentionableUsers,
 		rs.DefaultBranch,
 		rs.StarsHistory,
+		rs.CommitsHistory,
 		rs.LivenessScore,
 		rs.GoVersion,
 		len(rs.DirectDeps))

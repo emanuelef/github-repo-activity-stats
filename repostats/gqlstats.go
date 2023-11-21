@@ -724,14 +724,11 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 	}
 
 	// 30d commits history
-	/*
 	result.CommitsHistory, err = c.getCommitsShortHistory(ctx, repoSplit[0], repoSplit[1], result.Commits)
 	if err != nil {
 		log.Printf("%v\n", err)
 		return &result, err
 	}
-	*/
-
 
 	if depFetcher := deps.CreateFetcher(result.Language); depFetcher != nil {
 		depFetcher.GetDepsList(ctx, c.restyClient, ghRepo, &result)
