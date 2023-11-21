@@ -24,6 +24,12 @@ type StarsPerDay struct {
 	TotalStars int
 }
 
+type CommitsPerDay struct {
+	Day          JSONDay
+	Commits      int
+	TotalCommits int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
@@ -36,6 +42,34 @@ type StarsHistory struct {
 	LastStarDate     time.Time
 	AddedPerMille30d float32
 	StarsTimeline    []StarsPerDay
+}
+
+type CommitsHistory struct {
+	AddedLast24H     int
+	AddedLast7d      int
+	AddedLast14d     int
+	AddedLast30d     int
+	LastCommitDate   time.Time
+	AddedPerMille30d float32
+	CommitsTimeline  []CommitsPerDay
+	DifferentAuthors int
+}
+
+func (sh CommitsHistory) String() string {
+	return fmt.Sprintf(`Last Commit Date: %s
+	Commits Different Authors %d
+Commits AddedLast24H: %d
+Commits AddedLast7d: %d
+Commits AddedLast14d: %d
+Commits AddedLast30d: %d
+Commits AddedPerMille30d: %.2f`,
+		sh.LastCommitDate,
+		sh.DifferentAuthors,
+		sh.AddedLast24H,
+		sh.AddedLast7d,
+		sh.AddedLast14d,
+		sh.AddedLast30d,
+		sh.AddedPerMille30d)
 }
 
 func (sh StarsHistory) String() string {
@@ -55,6 +89,7 @@ Stars AddedPerMille30d: %.2f`, sh.LastStarDate,
 type RepoStats struct {
 	GHPath           string
 	Stars            int
+	Commits          int
 	Size             int
 	Language         string
 	OpenIssues       int
@@ -67,6 +102,7 @@ type RepoStats struct {
 	LastReleaseDate  time.Time
 	LivenessScore    float32
 	StarsHistory
+	CommitsHistory
 	GoRepo
 }
 
@@ -85,6 +121,7 @@ Archived: %t
 Mentionable Users: %d
 Default Branch: %s
 %s
+%s
 Liveness Score: %.2f
 Go version: %s
 Go Direct dependencies: %d
@@ -101,6 +138,7 @@ Go Direct dependencies: %d
 		rs.MentionableUsers,
 		rs.DefaultBranch,
 		rs.StarsHistory,
+		rs.CommitsHistory,
 		rs.LivenessScore,
 		rs.GoVersion,
 		len(rs.DirectDeps))

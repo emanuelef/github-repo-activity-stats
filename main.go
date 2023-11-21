@@ -60,14 +60,14 @@ func main() {
 
 	ctx := context.Background()
 
+	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
+	fmt.Println(result)
+
 	// repoTest := "kubernetes/kubernetes"
 	// repoTest := "agnivade/levenshtein"
 	repoTest := "mattn/go-colorable"
 
 	result, _ = clientGQL.GetAllStats(ctx, repoTest)
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
 
 	allStars, _ := clientGQL.GetAllStarsHistory(ctx, repoTest, result.CreatedAt, nil)
