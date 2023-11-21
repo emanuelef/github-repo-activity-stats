@@ -52,15 +52,19 @@ type CommitsHistory struct {
 	LastCommitDate   time.Time
 	AddedPerMille30d float32
 	CommitsTimeline  []CommitsPerDay
+	DifferentAuthors int
 }
 
 func (sh CommitsHistory) String() string {
 	return fmt.Sprintf(`Last Commit Date: %s
+	Commits Different Authors %d
 Commits AddedLast24H: %d
 Commits AddedLast7d: %d
 Commits AddedLast14d: %d
 Commits AddedLast30d: %d
-Commits AddedPerMille30d: %.2f`, sh.LastCommitDate,
+Commits AddedPerMille30d: %.2f`,
+		sh.LastCommitDate,
+		sh.DifferentAuthors,
 		sh.AddedLast24H,
 		sh.AddedLast7d,
 		sh.AddedLast14d,

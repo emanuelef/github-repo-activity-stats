@@ -291,6 +291,8 @@ func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name stri
 
 	currentTime := time.Now()
 
+	var uniqueAuthors = make(map[string]struct{})
+
 	variablesCommits := map[string]any{
 		"owner":         githubv4.String(owner),
 		"name":          githubv4.String(name),
@@ -299,6 +301,11 @@ func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name stri
 
 	type commit struct {
 		Node struct {
+			Author struct {
+				User struct {
+					Id string
+				}
+			}
 			CommittedDate time.Time
 			Additions     int
 		}
@@ -368,6 +375,7 @@ func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name stri
 			}
 
 			result.CommitsTimeline[29-int(days)].Commits += 1
+			uniqueAuthors[star.Node.Author.User.Id] = struct{}{}
 		}
 
 		if !queryCommits.Repository.DefaultBranchRef.Target.Commit.History.PageInfo.HasNextPage || moreThan30daysFlag {
@@ -380,6 +388,8 @@ func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name stri
 	if totalCommits > 0 {
 		result.AddedPerMille30d = 1000 * (float32(result.AddedLast30d) / float32(totalCommits))
 	}
+
+	result.DifferentAuthors = len(uniqueAuthors)
 
 	for i := len(result.CommitsTimeline) - 1; i >= 0; i-- {
 		if i == len(result.CommitsTimeline)-1 {
