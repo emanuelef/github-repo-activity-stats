@@ -26,7 +26,7 @@ type StarsPerDay struct {
 
 type CommitsPerDay struct {
 	Day          JSONDay
-	Stars        int
+	Commits      int
 	TotalCommits int
 }
 
