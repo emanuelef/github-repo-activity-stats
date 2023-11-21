@@ -136,4 +136,7 @@ func main() {
 	// pipenv Pipfile
 	result, _ = clientGQL.GetAllStats(ctx, "zappa/Zappa")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "omeid/uconfig")
+	fmt.Println(result)
 }
