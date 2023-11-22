@@ -34,6 +34,10 @@ func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
 
+func (t CommitsPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.Commits, t.TotalCommits})
+}
+
 type StarsHistory struct {
 	AddedLast24H     int
 	AddedLast7d      int
