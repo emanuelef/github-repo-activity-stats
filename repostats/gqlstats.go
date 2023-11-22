@@ -291,7 +291,7 @@ func (c *ClientGQL) getCommitsShortHistory(ctx context.Context, owner, name stri
 
 	currentTime := time.Now()
 
-	var uniqueAuthors = make(map[string]struct{})
+	uniqueAuthors := make(map[string]struct{})
 
 	variablesCommits := map[string]any{
 		"owner":         githubv4.String(owner),
@@ -632,6 +632,8 @@ func (c *ClientGQL) GetCurrentLimits(ctx context.Context) (*RateLimit, error) {
 func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.RepoStats, error) {
 	result := stats.RepoStats{}
 
+	currentTime := time.Now()
+
 	ctx, span := tracer.Start(ctx, "fetch-repo-stats")
 	defer span.End()
 
@@ -662,6 +664,10 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		}
 	}
 
+	type starred struct {
+		StarredAt time.Time
+	}
+
 	var query struct {
 		Repository struct {
 			Description     string
@@ -690,6 +696,9 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 					} `graphql:"... on Commit"`
 				}
 			}
+			Stargazers struct {
+				Edges []starred
+			} `graphql:"stargazers(last: 1)"`
 			Releases struct {
 				TotalCount int
 				Edges      []release
@@ -726,16 +735,26 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		result.LastReleaseDate = releases[0].Node.CreatedAt
 	}
 
+	stars := query.Repository.Stargazers.Edges
+
+	if len(stars) > 0 && result.LastStarDate.IsZero() {
+		result.LastStarDate = stars[0].StarredAt
+	}
+
 	// 30d stars history
-	result.StarsHistory, err = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
-	if err != nil {
-		log.Printf("%v\n", err)
-		return &result, err
+
+	days := currentTime.Sub(result.LastStarDate).Hours() / 24
+
+	if days < 30 {
+		result.StarsHistory, err = c.getStarsHistory(ctx, repoSplit[0], repoSplit[1], result.Stars)
+		if err != nil {
+			log.Printf("%v\n", err)
+			return &result, err
+		}
 	}
 
 	// 30d commits history
-	currentTime := time.Now()
-	days := currentTime.Sub(result.LastCommitDate).Hours() / 24
+	days = currentTime.Sub(result.LastCommitDate).Hours() / 24
 
 	if days < 30 {
 		result.CommitsHistory, err = c.getCommitsShortHistory(ctx, repoSplit[0], repoSplit[1], result.Commits)

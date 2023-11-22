@@ -98,7 +98,6 @@ type RepoStats struct {
 	DefaultBranch    string
 	MentionableUsers int
 	CreatedAt        time.Time
-	LastCommitDate   time.Time
 	LastReleaseDate  time.Time
 	LivenessScore    float32
 	StarsHistory

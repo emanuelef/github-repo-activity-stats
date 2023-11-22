@@ -137,6 +137,9 @@ func main() {
 	result, _ = clientGQL.GetAllStats(ctx, "zappa/Zappa")
 	fmt.Println(result)
 
-	result, _ = clientGQL.GetAllStats(ctx, "omeid/uconfig")
+	result, _ = clientGQL.GetAllStats(ctx, "confluentinc/confluent-kafka-go")
+	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "1set/gut")
 	fmt.Println(result)
 }
