@@ -107,6 +107,7 @@ func (c *Client) getStarsHistory(ghRepo string, totalStars int) (stats.StarsHist
 	return result, nil
 }
 
+// Refactor this and most of the code
 func (c *Client) GetAllStats(ghRepo string) (*stats.RepoStats, error) {
 	res := make(map[string]any)
 	restyReq := c.restyClient.R().SetResult(&res)

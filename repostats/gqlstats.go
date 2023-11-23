@@ -751,6 +751,10 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 			log.Printf("%v\n", err)
 			return &result, err
 		}
+	} else {
+		for i := 1; i < 31; i++ {
+			result.StarsHistory.StarsTimeline = append(result.StarsTimeline, stats.StarsPerDay{Day: stats.JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
+		}
 	}
 
 	// 30d commits history
@@ -761,6 +765,10 @@ func (c *ClientGQL) GetAllStats(ctx context.Context, ghRepo string) (*stats.Repo
 		if err != nil {
 			log.Printf("%v\n", err)
 			return &result, err
+		}
+	} else {
+		for i := 1; i < 31; i++ {
+			result.CommitsHistory.CommitsTimeline = append(result.CommitsTimeline, stats.CommitsPerDay{Day: stats.JSONDay(currentTime.AddDate(0, 0, -(30 - i)).Truncate(24 * time.Hour))})
 		}
 	}
 

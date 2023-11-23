@@ -60,6 +60,10 @@ func main() {
 
 	ctx := context.Background()
 
+	// no commits or stars in the last 30d, at least last time I checked
+	result, _ = clientGQL.GetAllStats(ctx, "mengzhuo/cookiestxt")
+	fmt.Println(result)
+
 	result, _ = clientGQL.GetAllStats(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(result)
 
@@ -141,5 +145,8 @@ func main() {
 	fmt.Println(result)
 
 	result, _ = clientGQL.GetAllStats(ctx, "1set/gut")
+	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "google/google-api-go-client")
 	fmt.Println(result)
 }
