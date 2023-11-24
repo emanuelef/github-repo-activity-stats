@@ -10,6 +10,7 @@ on:
       - ".github/**"
       - "get_repos_data.sh"
       - "all-stars-history-k8s/**"
+      - "main.go"
 
 jobs:
   build:

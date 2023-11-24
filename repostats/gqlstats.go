@@ -166,26 +166,6 @@ func (c *ClientGQL) getStarsHistory(ctx context.Context, owner, name string, tot
 
 	currentTime := time.Now()
 
-	/*
-		{
-			repository(owner: "kubernetes", name: "kubernetes") {
-			  stargazers(last: 100) {
-				totalCount
-				edges {
-				  starredAt
-				  cursor
-				}
-			  }
-			}
-			rateLimit {
-			  limit
-			  cost
-			  remaining
-			  resetAt
-			}
-		  }
-	*/
-
 	variablesStars := map[string]any{
 		"owner":       githubv4.String(owner),
 		"name":        githubv4.String(name),
