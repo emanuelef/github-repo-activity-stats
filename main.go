@@ -60,6 +60,10 @@ func main() {
 
 	ctx := context.Background()
 
+	//
+	result, _ = clientGQL.GetAllStats(ctx, "kubewarden/kubewarden-controller")
+	fmt.Println(result)
+
 	// no commits or stars in the last 30d, at least last time I checked
 	result, _ = clientGQL.GetAllStats(ctx, "mengzhuo/cookiestxt")
 	fmt.Println(result)

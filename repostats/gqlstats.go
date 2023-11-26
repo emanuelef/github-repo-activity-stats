@@ -848,6 +848,18 @@ func getLivenessScore(ctx context.Context, restyClient *resty.Client, ghRepo str
 		break
 	}
 
+	switch {
+	case result.CommitsHistory.AddedLast30d > 20:
+		score += 10
+		break
+	case result.CommitsHistory.AddedLast30d > 10:
+		score += 6
+		break
+	case result.CommitsHistory.AddedLast30d > 1:
+		score += 2
+		break
+	}
+
 	if result.Archived {
 		score -= 30
 	}
