@@ -519,8 +519,10 @@ func (c *ClientGQL) GetAllStarsHistoryTwoWays(ctx context.Context, ghRepo string
 			if err != nil {
 				fmt.Printf("B %d %v\n", i, err)
 				starsCursor := ""
-				if v, ok := variablesStars["starsCursor"].(*githubv4.String); ok {
+				if v, ok := variablesStars["starsCursor"].(*githubv4.String); ok && v != nil {
 					starsCursor = string(*v)
+				} else {
+					log.Println("Warning: starsCursor is nil or not a githubv4.String")
 				}
 
 				fmt.Println(starsCursor)
