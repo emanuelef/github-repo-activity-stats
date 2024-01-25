@@ -6,8 +6,8 @@ require (
 	github.com/go-resty/resty/v2 v2.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pelletier/go-toml v1.9.5
-	github.com/shurcooL/githubv4 v0.0.0-20231126234147-1cffa1f02456
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
+	github.com/shurcooL/githubv4 v0.0.0-20240120211514-18a1ae0e79dc
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
 	go.opentelemetry.io/otel v1.22.0
 	go.opentelemetry.io/otel/trace v1.22.0
 	golang.org/x/mod v0.14.0
