@@ -10,7 +10,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
 	go.opentelemetry.io/otel v1.22.0
 	go.opentelemetry.io/otel/trace v1.22.0
-	golang.org/x/mod v0.14.0
+	golang.org/x/mod v0.15.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/sync v0.6.0
 )
