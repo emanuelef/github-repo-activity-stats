@@ -29,13 +29,33 @@ func (gdf RustDepsFetcher) GetDepsList(ctx context.Context, restyClient *resty.C
 		}
 
 		var directDeps []string
+
+		// Check [dependencies] section
 		if depSection, ok := cfg.Get("dependencies").(*toml.Tree); ok {
 			for name := range depSection.ToMap() {
 				directDeps = append(directDeps, name)
 			}
 		}
 
-		result.DirectDeps = directDeps
+		// Check workspace.dependencies section
+		if workspace, ok := cfg.Get("workspace").(*toml.Tree); ok {
+			if workspaceDeps, ok := workspace.Get("dependencies").(*toml.Tree); ok {
+				for name := range workspaceDeps.ToMap() {
+					directDeps = append(directDeps, name)
+				}
+			}
+		}
+
+		// Remove duplicates by converting to a map and then back to a slice
+		uniqueDirectDeps := make(map[string]struct{})
+		for _, dep := range directDeps {
+			uniqueDirectDeps[dep] = struct{}{}
+		}
+
+		result.DirectDeps = make([]string, 0, len(uniqueDirectDeps))
+		for dep := range uniqueDirectDeps {
+			result.DirectDeps = append(result.DirectDeps, dep)
+		}
 	}
 
 	return nil

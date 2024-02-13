@@ -153,4 +153,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "google/google-api-go-client")
 	fmt.Println(result)
+
+	result, _ = clientGQL.GetAllStats(ctx, "denoland/deno")
+	fmt.Println(result)
 }
