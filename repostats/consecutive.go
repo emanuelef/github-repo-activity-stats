@@ -40,3 +40,18 @@ func FindMaxConsecutivePeriods(starsData []stats.StarsPerDay, consecutiveDays in
 
 	return maxPeriods, nil
 }
+
+func NewStarsLastDays(starsData []stats.StarsPerDay, days int) int {
+	sum := 0
+
+	if days > len(starsData) {
+		days = len(starsData)
+	}
+
+	endIndex := len(starsData) - days
+	for i := endIndex; i < len(starsData); i++ {
+		sum += starsData[i].Stars
+	}
+
+	return sum
+}

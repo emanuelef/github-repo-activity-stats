@@ -158,5 +158,8 @@ func main() {
 	fmt.Println(result)
 
 	res, _ := repostats.FindMaxConsecutivePeriods(result.StarsHistory.StarsTimeline, 30)
-	fmt.Printf("%v", res)
+	fmt.Printf("%v'n", res)
+
+	last7DaysStars := repostats.NewStarsLastDays(result.StarsHistory.StarsTimeline, 7)
+	fmt.Println(last7DaysStars)
 }
