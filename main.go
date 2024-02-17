@@ -156,4 +156,7 @@ func main() {
 
 	result, _ = clientGQL.GetAllStats(ctx, "denoland/deno")
 	fmt.Println(result)
+
+	res, _ := repostats.FindMaxConsecutivePeriods(result.StarsHistory.StarsTimeline, 30)
+	fmt.Printf("%v", res)
 }
