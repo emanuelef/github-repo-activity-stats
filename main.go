@@ -112,53 +112,55 @@ func main() {
 
 	starsCount, createdAt, _ := clientGQL.GetTotalStars(ctx, "ceccopierangiolieugenio/pyTermTk")
 	fmt.Println(starsCount, createdAt)
+	/*
+		result, _ = clientGQL.GetAllStats(ctx, "surrealdb/surrealdb")
+		fmt.Println(result)
 
-	result, _ = clientGQL.GetAllStats(ctx, "surrealdb/surrealdb")
+		result, _ = clientGQL.GetAllStats(ctx, "fractalide/fractalide")
+		fmt.Println(result)
+
+		result, _ = clientGQL.GetAllStats(ctx, "chaosprint/glicol")
+		fmt.Println(result)
+
+		result, _ = clientGQL.GetAllStats(ctx, "gen2brain/malgo")
+		fmt.Println(result)
+
+		// package.json
+		result, _ = clientGQL.GetAllStats(ctx, "winstonjs/winston")
+		fmt.Println(result)
+
+		// requirements.txt
+		result, _ = clientGQL.GetAllStats(ctx, "encode/uvicorn")
+		fmt.Println(result)
+
+		// poetry pyproject.toml
+		result, _ = clientGQL.GetAllStats(ctx, "copier-org/copier")
+		fmt.Println(result)
+
+		// setup.py
+		result, _ = clientGQL.GetAllStats(ctx, "httpie/cli")
+		fmt.Println(result)
+
+		// pipenv Pipfile
+		result, _ = clientGQL.GetAllStats(ctx, "zappa/Zappa")
+		fmt.Println(result)
+
+		result, _ = clientGQL.GetAllStats(ctx, "confluentinc/confluent-kafka-go")
+		fmt.Println(result)
+
+		result, _ = clientGQL.GetAllStats(ctx, "1set/gut")
+		fmt.Println(result)
+
+		result, _ = clientGQL.GetAllStats(ctx, "google/google-api-go-client")
+		fmt.Println(result)
+
+	*/
+
+	result, _ = clientGQL.GetAllStats(ctx, "influxdata/influxdb")
 	fmt.Println(result)
 
-	result, _ = clientGQL.GetAllStats(ctx, "fractalide/fractalide")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "chaosprint/glicol")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "gen2brain/malgo")
-	fmt.Println(result)
-
-	// package.json
-	result, _ = clientGQL.GetAllStats(ctx, "winstonjs/winston")
-	fmt.Println(result)
-
-	// requirements.txt
-	result, _ = clientGQL.GetAllStats(ctx, "encode/uvicorn")
-	fmt.Println(result)
-
-	// poetry pyproject.toml
-	result, _ = clientGQL.GetAllStats(ctx, "copier-org/copier")
-	fmt.Println(result)
-
-	// setup.py
-	result, _ = clientGQL.GetAllStats(ctx, "httpie/cli")
-	fmt.Println(result)
-
-	// pipenv Pipfile
-	result, _ = clientGQL.GetAllStats(ctx, "zappa/Zappa")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "confluentinc/confluent-kafka-go")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "1set/gut")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "google/google-api-go-client")
-	fmt.Println(result)
-
-	result, _ = clientGQL.GetAllStats(ctx, "denoland/deno")
-	fmt.Println(result)
-
-	res, _ := repostats.FindMaxConsecutivePeriods(result.StarsHistory.StarsTimeline, 30)
-	fmt.Printf("%v'n", res)
+	maxPeriods, maxPeaks, _ := repostats.FindMaxConsecutivePeriods(result.StarsHistory.StarsTimeline, 10)
+	fmt.Printf("%v %v \n", maxPeriods, maxPeaks)
 
 	last7DaysStars := repostats.NewStarsLastDays(result.StarsHistory.StarsTimeline, 7)
 	fmt.Println(last7DaysStars)
