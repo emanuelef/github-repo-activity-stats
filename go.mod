@@ -3,7 +3,7 @@ module github.com/emanuelef/github-repo-activity-stats
 go 1.21
 
 require (
-	github.com/go-resty/resty/v2 v2.12.0
+	github.com/go-resty/resty/v2 v2.13.1
 	github.com/joho/godotenv v1.5.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/shurcooL/githubv4 v0.0.0-20240429030203-be2daab69064
@@ -21,5 +21,5 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	go.opentelemetry.io/otel/metric v1.26.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 )
