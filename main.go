@@ -60,6 +60,9 @@ func main() {
 
 	ctx := context.Background()
 
+	allIssues, _ := clientGQL.GetAllIssuesHistory(ctx, "temporalio/temporal", nil)
+	fmt.Println(time.Time(allIssues[len(allIssues)-1].Day))
+
 	//
 	result, _ = clientGQL.GetAllStats(ctx, "kubewarden/kubewarden-controller")
 	fmt.Println(result)

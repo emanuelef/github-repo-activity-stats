@@ -899,3 +899,115 @@ func (c *ClientGQL) GetTotalStars(ctx context.Context, ghRepo string) (int, time
 
 	return query.Repository.StargazerCount, query.Repository.CreatedAt, nil
 }
+
+func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.IssuesPerDay, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	defer func() {
+		if updateChannel != nil {
+			close(updateChannel)
+		}
+	}()
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []stats.IssuesPerDay{}
+	counter := &Counter{}
+
+	_, repoCreationDate, err := c.GetTotalStars(ctx, ghRepo)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return result, err
+	}
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24 + 1)
+
+	for i := 0; i < days; i++ {
+		result = append(result, stats.IssuesPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	type starred struct {
+		StarredAt time.Time
+		Cursor    string
+	}
+
+	variablesStars := map[string]any{
+		"owner":        githubv4.String(owner),
+		"name":         githubv4.String(name),
+		"issuesCursor": (*githubv4.String)(nil),
+	}
+
+	type issues struct {
+		State     string
+		ClosedAt  time.Time
+		CreatedAt time.Time
+	}
+
+	var queryStars struct {
+		Repository struct {
+			Issues struct {
+				Nodes    []issues
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"issues(first: 100, orderBy: {field: CREATED_AT, direction: ASC}, after: $issuesCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for {
+		err := c.query(ctx, &queryStars, variablesStars)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return nil, err
+		}
+
+		res := queryStars.Repository.Issues.Nodes
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, issue := range res {
+			days := issue.CreatedAt.Sub(repoCreationDate).Hours() / 24
+			switch issue.State {
+			case "CLOSED":
+				result[int(days)].Closed++
+			case "OPEN":
+				result[int(days)].Opened++
+			}
+		}
+
+		if !queryStars.Repository.Issues.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesStars["issuesCursor"] = githubv4.NewString(queryStars.Repository.Issues.PageInfo.EndCursor)
+
+		counter.Increment()
+
+		if updateChannel != nil {
+			updateChannel <- counter.Value()
+		}
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalOpened = result[i-1].TotalOpened + day.Opened
+			result[i].TotalClosed = result[i-1].TotalClosed + day.Closed
+		} else {
+			result[i].TotalOpened = day.Opened
+			result[i].TotalClosed = day.Closed
+		}
+	}
+
+	return result, nil
+}

@@ -30,6 +30,14 @@ type CommitsPerDay struct {
 	TotalCommits int
 }
 
+type IssuesPerDay struct {
+	Day    JSONDay
+	Opened int
+	Closed int
+	TotalOpened int
+	TotalClosed int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
