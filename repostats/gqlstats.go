@@ -981,8 +981,10 @@ func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, upda
 			result[int(daysOpened)].Opened++
 
 			if issue.State == "CLOSED" {
-				daysClosed := issue.ClosedAt.Sub(repoCreationDate).Hours() / 24
-				result[int(daysClosed)].Closed++
+				if !issue.ClosedAt.IsZero() {
+					daysClosed := issue.ClosedAt.Sub(repoCreationDate).Hours() / 24
+					result[int(daysClosed)].Closed++
+				}
 			}
 
 			if issue.State == "OPEN" {
