@@ -40,6 +40,12 @@ type IssuesPerDay struct {
 	TotalCurrentlyOpen int
 }
 
+type ForksPerDay struct {
+	Day        JSONDay
+	Forks      int
+	TotalForks int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
@@ -50,6 +56,10 @@ func (t CommitsPerDay) MarshalJSON() ([]byte, error) {
 
 func (t IssuesPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Opened, t.Closed, t.TotalOpened, t.TotalClosed, t.CurrentlyOpen, t.TotalCurrentlyOpen})
+}
+
+func (t ForksPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.Forks, t.TotalForks})
 }
 
 type StarsHistory struct {

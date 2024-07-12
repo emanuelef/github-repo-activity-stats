@@ -63,6 +63,9 @@ func main() {
 	allIssues, _ := clientGQL.GetAllIssuesHistory(ctx, "temporalio/temporal", nil)
 	fmt.Println(time.Time(allIssues[len(allIssues)-1].Day))
 
+	allForks, _ := clientGQL.GetAllForksHistory(ctx, "ceccopierangiolieugenio/pyTermTk", nil)
+	fmt.Println(time.Time(allForks[len(allForks)-1].Day))
+
 	//
 	result, _ = clientGQL.GetAllStats(ctx, "kubewarden/kubewarden-controller")
 	fmt.Println(result)
