@@ -984,6 +984,10 @@ func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, upda
 				daysClosed := issue.ClosedAt.Sub(repoCreationDate).Hours() / 24
 				result[int(daysClosed)].Closed++
 			}
+
+			if issue.State == "OPEN" {
+				result[int(daysOpened)].CurrentlyOpen++
+			}
 		}
 
 		if !queryStars.Repository.Issues.PageInfo.HasNextPage {
@@ -1003,9 +1007,11 @@ func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, upda
 		if i > 0 {
 			result[i].TotalOpened = result[i-1].TotalOpened + day.Opened
 			result[i].TotalClosed = result[i-1].TotalClosed + day.Closed
+			result[i].TotalCurrentlyOpen = result[i-1].TotalCurrentlyOpen + day.CurrentlyOpen
 		} else {
 			result[i].TotalOpened = day.Opened
 			result[i].TotalClosed = day.Closed
+			result[i].TotalCurrentlyOpen = day.CurrentlyOpen
 		}
 	}
 

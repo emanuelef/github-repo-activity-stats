@@ -31,11 +31,13 @@ type CommitsPerDay struct {
 }
 
 type IssuesPerDay struct {
-	Day    JSONDay
-	Opened int
-	Closed int
-	TotalOpened int
-	TotalClosed int
+	Day                JSONDay
+	Opened             int
+	Closed             int
+	TotalOpened        int
+	TotalClosed        int
+	CurrentlyOpen      int
+	TotalCurrentlyOpen int
 }
 
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
