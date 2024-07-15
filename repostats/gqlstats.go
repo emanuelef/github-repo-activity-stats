@@ -978,6 +978,11 @@ func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, upda
 
 		for _, issue := range res {
 			daysOpened := issue.CreatedAt.Sub(repoCreationDate).Hours() / 24
+
+			if daysOpened < 0 {
+				continue
+			}
+
 			result[int(daysOpened)].Opened++
 
 			if issue.State == "CLOSED" {
@@ -1096,6 +1101,11 @@ func (c *ClientGQL) GetAllForksHistory(ctx context.Context, ghRepo string, updat
 
 		for _, fork := range res {
 			daysForkCreated := fork.CreatedAt.Sub(repoCreationDate).Hours() / 24
+
+			if daysForkCreated < 0 {
+				continue
+			}
+
 			result[int(daysForkCreated)].Forks++
 		}
 
