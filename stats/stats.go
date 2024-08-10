@@ -75,7 +75,7 @@ func (t ForksPerDay) MarshalJSON() ([]byte, error) {
 }
 
 func (t PRsPerDay) MarshalJSON() ([]byte, error) {
-	return json.Marshal([]any{t.Day, t.Opened, t.Merged, t.Closed, t.TotalOpened, t, t.TotalMerged, t.TotalClosed, t.CurrentlyOpen, t.TotalCurrentlyOpen})
+	return json.Marshal([]any{t.Day, t.Opened, t.Merged, t.Closed, t.TotalOpened, t.TotalMerged, t.TotalClosed, t.CurrentlyOpen, t.TotalCurrentlyOpen})
 }
 
 type StarsHistory struct {
