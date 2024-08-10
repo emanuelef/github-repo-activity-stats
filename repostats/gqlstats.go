@@ -934,11 +934,6 @@ func (c *ClientGQL) GetAllIssuesHistory(ctx context.Context, ghRepo string, upda
 		result = append(result, stats.IssuesPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
 	}
 
-	type starred struct {
-		StarredAt time.Time
-		Cursor    string
-	}
-
 	variablesStars := map[string]any{
 		"owner":        githubv4.String(owner),
 		"name":         githubv4.String(name),
@@ -1129,5 +1124,135 @@ func (c *ClientGQL) GetAllForksHistory(ctx context.Context, ghRepo string, updat
 			result[i].TotalForks = day.Forks
 		}
 	}
+	return result, nil
+}
+
+func (c *ClientGQL) GetAllPRsHistory(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.PRsPerDay, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	defer func() {
+		if updateChannel != nil {
+			close(updateChannel)
+		}
+	}()
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []stats.PRsPerDay{}
+	counter := &Counter{}
+
+	_, repoCreationDate, err := c.GetTotalStars(ctx, ghRepo)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return result, err
+	}
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24 + 1)
+
+	for i := 0; i < days; i++ {
+		result = append(result, stats.PRsPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	variablesStars := map[string]any{
+		"owner":     githubv4.String(owner),
+		"name":      githubv4.String(name),
+		"prsCursor": (*githubv4.String)(nil),
+	}
+
+	type prs struct {
+		State     string
+		MergedAt  time.Time
+		ClosedAt  time.Time
+		CreatedAt time.Time
+	}
+
+	var queryPRs struct {
+		Repository struct {
+			PullRequests struct {
+				Nodes    []prs
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: ASC}, after: $prsCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for {
+		err := c.query(ctx, &queryPRs, variablesStars)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return nil, err
+		}
+
+		res := queryPRs.Repository.PullRequests.Nodes
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, pr := range res {
+			daysOpened := pr.CreatedAt.Sub(repoCreationDate).Hours() / 24
+
+			if daysOpened < 0 {
+				continue
+			}
+
+			result[int(daysOpened)].Opened++
+
+			if pr.State == "MERGED" {
+				if !pr.ClosedAt.IsZero() {
+					daysClosed := pr.MergedAt.Sub(repoCreationDate).Hours() / 24
+					result[int(daysClosed)].Merged++
+				}
+			}
+
+			if pr.State == "CLOSED" {
+				if !pr.ClosedAt.IsZero() {
+					daysClosed := pr.ClosedAt.Sub(repoCreationDate).Hours() / 24
+					result[int(daysClosed)].Closed++
+				}
+			}
+
+			if pr.State == "OPEN" {
+				result[int(daysOpened)].CurrentlyOpen++
+			}
+		}
+
+		if !queryPRs.Repository.PullRequests.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesStars["prsCursor"] = githubv4.NewString(queryPRs.Repository.PullRequests.PageInfo.EndCursor)
+
+		counter.Increment()
+
+		if updateChannel != nil {
+			updateChannel <- counter.Value()
+		}
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalOpened = result[i-1].TotalOpened + day.Opened
+			result[i].TotalMerged = result[i-1].TotalMerged + day.Merged
+			result[i].TotalClosed = result[i-1].TotalClosed + day.Closed
+			result[i].TotalCurrentlyOpen = result[i-1].TotalCurrentlyOpen + day.CurrentlyOpen
+		} else {
+			result[i].TotalOpened = day.Opened
+			result[i].TotalMerged = day.Merged
+			result[i].TotalClosed = day.Closed
+			result[i].TotalCurrentlyOpen = day.CurrentlyOpen
+		}
+	}
+
 	return result, nil
 }

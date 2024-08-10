@@ -46,6 +46,18 @@ type ForksPerDay struct {
 	TotalForks int
 }
 
+type PRsPerDay struct {
+	Day                JSONDay
+	Opened             int
+	Merged             int
+	Closed             int
+	TotalOpened        int
+	TotalMerged        int
+	TotalClosed        int
+	CurrentlyOpen      int
+	TotalCurrentlyOpen int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
@@ -60,6 +72,10 @@ func (t IssuesPerDay) MarshalJSON() ([]byte, error) {
 
 func (t ForksPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Forks, t.TotalForks})
+}
+
+func (t PRsPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.Opened, t.Merged, t.Closed, t.TotalOpened, t, t.TotalMerged, t.TotalClosed, t.CurrentlyOpen, t.TotalCurrentlyOpen})
 }
 
 type StarsHistory struct {

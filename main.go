@@ -60,6 +60,9 @@ func main() {
 
 	ctx := context.Background()
 
+	allPRs, _ := clientGQL.GetAllPRsHistory(ctx, "temporalio/temporal", nil)
+	fmt.Println(time.Time(allPRs[len(allPRs)-1].Day))
+
 	allIssues, _ := clientGQL.GetAllIssuesHistory(ctx, "temporalio/temporal", nil)
 	fmt.Println(time.Time(allIssues[len(allIssues)-1].Day))
 
