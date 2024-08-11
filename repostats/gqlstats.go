@@ -1256,3 +1256,136 @@ func (c *ClientGQL) GetAllPRsHistory(ctx context.Context, ghRepo string, updateC
 
 	return result, nil
 }
+
+func (c *ClientGQL) GetAllCommitsHistory(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.CommitsPerDay, string, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, "", fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	defer func() {
+		if updateChannel != nil {
+			close(updateChannel)
+		}
+	}()
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []stats.CommitsPerDay{}
+	counter := &Counter{}
+
+	_, repoCreationDate, err := c.GetTotalStars(ctx, ghRepo)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return result, "", err
+	}
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24 + 1)
+
+	for i := 0; i < days; i++ {
+		result = append(result, stats.CommitsPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	type defaultBranch struct {
+		Repository struct {
+			DefaultBranchRef struct {
+				Name githubv4.String
+			}
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	variablesDefaultBranch := map[string]any{
+		"owner": githubv4.String(owner),
+		"name":  githubv4.String(name),
+	}
+
+	var queryDefaultBranch defaultBranch
+	err = c.query(ctx, &queryDefaultBranch, variablesDefaultBranch)
+	if err != nil {
+		log.Printf("Error getting default branch: %v\n", err)
+		// You can choose to return the error or handle it differently
+	}
+
+	defaultBranchName := queryDefaultBranch.Repository.DefaultBranchRef.Name
+
+	log.Printf("Default branch: %s\n", defaultBranchName)
+
+	type commit struct {
+		CommittedDate time.Time
+	}
+
+	variablesCommits := map[string]any{
+		"owner":             githubv4.String(owner),
+		"name":              githubv4.String(name),
+		"defaultBranchName": githubv4.String(defaultBranchName),
+		"commitsCursor":     (*githubv4.String)(nil),
+	}
+
+	var queryCommits struct {
+		Repository struct {
+			Ref struct {
+				Target struct {
+					Commit struct {
+						History struct {
+							Nodes    []commit
+							PageInfo struct {
+								EndCursor   githubv4.String
+								HasNextPage bool
+							}
+						} `graphql:"history(first: 100, after: $commitsCursor)"`
+					} `graphql:"... on Commit"`
+				} `graphql:"target"`
+			} `graphql:"ref(qualifiedName: $defaultBranchName)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	for {
+		err := c.query(ctx, &queryCommits, variablesCommits)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return nil, "", err
+		}
+
+		res := queryCommits.Repository.Ref.Target.Commit.History.Nodes
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, commit := range res {
+			daysCommitMade := commit.CommittedDate.Sub(repoCreationDate).Hours() / 24
+
+			if daysCommitMade < 0 {
+				continue
+			}
+
+			result[int(daysCommitMade)].Commits++
+		}
+
+		if !queryCommits.Repository.Ref.Target.Commit.History.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesCommits["commitsCursor"] = githubv4.NewString(queryCommits.Repository.Ref.Target.Commit.History.PageInfo.EndCursor)
+
+		counter.Increment()
+
+		if updateChannel != nil {
+			updateChannel <- counter.Value()
+		}
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalCommits = result[i-1].TotalCommits + day.Commits
+		} else {
+			result[i].TotalCommits = day.Commits
+		}
+	}
+	return result, string(defaultBranchName), nil
+}

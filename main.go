@@ -60,6 +60,10 @@ func main() {
 
 	ctx := context.Background()
 
+	allCommits, defaultBranch, _ := clientGQL.GetAllCommitsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", nil)
+	fmt.Println(time.Time(allCommits[len(allCommits)-1].Day))
+	fmt.Println(defaultBranch)
+
 	allPRs, _ := clientGQL.GetAllPRsHistory(ctx, "temporalio/temporal", nil)
 	fmt.Println(time.Time(allPRs[len(allPRs)-1].Day))
 
