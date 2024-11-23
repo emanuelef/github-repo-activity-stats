@@ -3,7 +3,7 @@ module github.com/emanuelef/github-repo-activity-stats
 go 1.23
 
 require (
-	github.com/go-resty/resty/v2 v2.15.3
+	github.com/go-resty/resty/v2 v2.16.2
 	github.com/joho/godotenv v1.5.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
