@@ -12,7 +12,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.32.0
 	golang.org/x/mod v0.22.0
 	golang.org/x/oauth2 v0.24.0
-	golang.org/x/sync v0.9.0
+	golang.org/x/sync v0.10.0
 )
 
 require (
@@ -21,5 +21,5 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/net v0.32.0 // indirect
 )
