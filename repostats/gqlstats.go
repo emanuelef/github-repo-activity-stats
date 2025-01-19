@@ -1389,3 +1389,116 @@ func (c *ClientGQL) GetAllCommitsHistory(ctx context.Context, ghRepo string, upd
 	}
 	return result, string(defaultBranchName), nil
 }
+
+func (c *ClientGQL) GetNewContributorsHistory(ctx context.Context, ghRepo string, updateChannel chan<- int) ([]stats.NewContributorsPerDay, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	defer func() {
+		if updateChannel != nil {
+			close(updateChannel)
+		}
+	}()
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	result := []stats.NewContributorsPerDay{}
+	counter := &Counter{}
+
+	_, repoCreationDate, err := c.GetTotalStars(ctx, ghRepo)
+	if err != nil {
+		log.Printf("%v\n", err)
+		return result, err
+	}
+
+	currentTime := time.Now().UTC().Truncate(24 * time.Hour)
+	repoCreationDate = repoCreationDate.Truncate(24 * time.Hour)
+	diff := currentTime.Sub(repoCreationDate)
+	days := int(diff.Hours()/24 + 1)
+
+	for i := 0; i < days; i++ {
+		result = append(result, stats.NewContributorsPerDay{Day: stats.JSONDay(repoCreationDate.AddDate(0, 0, i).Truncate(24 * time.Hour))})
+	}
+
+	variablesContributors := map[string]any{
+		"owner":     githubv4.String(owner),
+		"name":      githubv4.String(name),
+		"prsCursor": (*githubv4.String)(nil),
+	}
+
+	type prs struct {
+		State    string
+		MergedAt time.Time
+		Author   struct {
+			Login string
+		}
+	}
+
+	var queryContributors struct {
+		Repository struct {
+			PullRequests struct {
+				Nodes    []prs
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: ASC}, after: $prsCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	seenContributors := map[string]bool{}
+
+	for {
+		err := c.query(ctx, &queryContributors, variablesContributors)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return nil, err
+		}
+
+		res := queryContributors.Repository.PullRequests.Nodes
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, pr := range res {
+			if pr.State == "MERGED" {
+				daysMerged := pr.MergedAt.Sub(repoCreationDate).Hours() / 24
+				if daysMerged < 0 {
+					continue
+				}
+
+				if _, exists := seenContributors[pr.Author.Login]; !exists {
+					seenContributors[pr.Author.Login] = true
+					result[int(daysMerged)].NewContributors++
+				}
+			}
+		}
+
+		if !queryContributors.Repository.PullRequests.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesContributors["prsCursor"] = githubv4.NewString(queryContributors.Repository.PullRequests.PageInfo.EndCursor)
+
+		counter.Increment()
+
+		if updateChannel != nil {
+			updateChannel <- counter.Value()
+		}
+	}
+
+	for i, day := range result {
+		if i > 0 {
+			result[i].TotalNewContributors = result[i-1].TotalNewContributors + day.NewContributors
+		} else {
+			result[i].TotalNewContributors = day.NewContributors
+		}
+	}
+
+	return result, nil
+}

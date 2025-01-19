@@ -58,6 +58,13 @@ type PRsPerDay struct {
 	TotalCurrentlyOpen int
 }
 
+// NewContributorsPerDay holds statistics about new contributors for a specific day.
+type NewContributorsPerDay struct {
+	Day                  JSONDay
+	NewContributors      int
+	TotalNewContributors int
+}
+
 func (t StarsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Stars, t.TotalStars})
 }
@@ -76,6 +83,10 @@ func (t ForksPerDay) MarshalJSON() ([]byte, error) {
 
 func (t PRsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.Opened, t.Merged, t.Closed, t.TotalOpened, t.TotalMerged, t.TotalClosed, t.CurrentlyOpen, t.TotalCurrentlyOpen})
+}
+
+func (t NewContributorsPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.NewContributors, t.TotalNewContributors})
 }
 
 type StarsHistory struct {

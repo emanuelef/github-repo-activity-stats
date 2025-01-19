@@ -73,6 +73,9 @@ func main() {
 	allForks, _ := clientGQL.GetAllForksHistory(ctx, "ceccopierangiolieugenio/pyTermTk", nil)
 	fmt.Println(time.Time(allForks[len(allForks)-1].Day))
 
+	allContributors, _ := clientGQL.GetNewContributorsHistory(ctx, "temporalio/temporal", nil)
+	fmt.Println(time.Time(allContributors[len(allContributors)-1].Day))
+
 	//
 	result, _ = clientGQL.GetAllStats(ctx, "kubewarden/kubewarden-controller")
 	fmt.Println(result)
