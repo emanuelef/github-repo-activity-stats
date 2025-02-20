@@ -1,6 +1,6 @@
 module github.com/emanuelef/github-repo-activity-stats
 
-go 1.23
+go 1.24
 
 require (
 	github.com/go-resty/resty/v2 v2.16.5
@@ -22,5 +22,5 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
 )
