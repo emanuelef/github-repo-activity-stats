@@ -7,12 +7,12 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
-	go.opentelemetry.io/otel v1.34.0
-	go.opentelemetry.io/otel/trace v1.34.0
-	golang.org/x/mod v0.23.0
-	golang.org/x/oauth2 v0.26.0
-	golang.org/x/sync v0.11.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
+	go.opentelemetry.io/otel v1.35.0
+	go.opentelemetry.io/otel/trace v1.35.0
+	golang.org/x/mod v0.24.0
+	golang.org/x/oauth2 v0.28.0
+	golang.org/x/sync v0.12.0
 )
 
 require (
@@ -21,6 +21,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel/metric v1.34.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
 )
