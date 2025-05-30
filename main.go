@@ -60,8 +60,7 @@ func main() {
 
 	ctx := context.Background()
 
-	resultRecent, _ := clientGQL.GetRecentStarsHistoryTwoWays(ctx, "helm/helm", 10, nil)
-	fmt.Println("Recent Stars:", resultRecent)
+	resultRecent, _ := clientGQL.GetRecentStarsHistoryTwoWays(ctx, "langflow-ai/langflow", 10, nil)
 	for _, val := range resultRecent {
 		fmt.Println("Date:", time.Time(val.Day), "Stars:", val.Stars, "Total Stars:", val.TotalStars)
 	}
