@@ -60,6 +60,12 @@ func main() {
 
 	ctx := context.Background()
 
+	resultRecent, _ := clientGQL.GetRecentStarsHistoryTwoWays(ctx, "helm/helm", 10, nil)
+	fmt.Println("Recent Stars:", resultRecent)
+	for _, val := range resultRecent {
+		fmt.Println("Date:", time.Time(val.Day), "Stars:", val.Stars, "Total Stars:", val.TotalStars)
+	}
+
 	allCommits, defaultBranch, _ := clientGQL.GetAllCommitsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", nil)
 	fmt.Println(time.Time(allCommits[len(allCommits)-1].Day))
 	fmt.Println(defaultBranch)
