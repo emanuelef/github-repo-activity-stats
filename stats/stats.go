@@ -89,6 +89,20 @@ func (t NewContributorsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.NewContributors, t.TotalNewContributors})
 }
 
+// ReleaseInfo represents a single GitHub release with its metadata
+type ReleaseInfo struct {
+	CreatedAt     time.Time `json:"createdAt"`
+	PublishedAt   time.Time `json:"publishedAt"`
+	Name          string    `json:"name"`
+	TagName       string    `json:"tagName"`
+	Description   string    `json:"description"`
+	IsPrerelease  bool      `json:"isPrerelease"`
+	IsDraft       bool      `json:"isDraft"`
+	URL           string    `json:"url"`
+	AuthorLogin   string    `json:"authorLogin"`
+	TotalReleases int       `json:"totalReleases"` // Cumulative count at this point
+}
+
 type StarsHistory struct {
 	AddedLast24H     int
 	AddedLast7d      int

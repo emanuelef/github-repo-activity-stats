@@ -1614,3 +1614,126 @@ func (c *ClientGQL) GetNewContributorsHistory(ctx context.Context, ghRepo string
 	return result, nil
 }
 
+func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]stats.ReleaseInfo, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("Repo should be provided as owner/name")
+	}
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	var result []stats.ReleaseInfo
+
+	variablesReleases := map[string]any{
+		"owner":          githubv4.String(owner),
+		"name":           githubv4.String(name),
+		"releasesCursor": (*githubv4.String)(nil),
+	}
+
+	type releaseAuthor struct {
+		Login string
+	}
+
+	type release struct {
+		CreatedAt     time.Time
+		PublishedAt   time.Time
+		Name          string
+		TagName       string
+		Description   string
+		IsPrerelease  bool
+		IsDraft       bool
+		URL           string
+		Author        releaseAuthor
+		ReleaseAssets struct {
+			TotalCount int
+		}
+	}
+
+	var queryReleases struct {
+		Repository struct {
+			Releases struct {
+				TotalCount int
+				Nodes      []release
+				PageInfo   struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"releases(first: 100, orderBy: {field: CREATED_AT, direction: DESC}, after: $releasesCursor)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	totalReleases := 0
+	runningTotal := 0
+
+	// First query to get total count
+	err := c.query(ctx, &queryReleases, variablesReleases)
+	if err != nil {
+		return nil, err
+	}
+	
+	totalReleases = queryReleases.Repository.Releases.TotalCount
+	runningTotal = totalReleases
+
+	// Reset for full query loop
+	variablesReleases["releasesCursor"] = (*githubv4.String)(nil)
+	
+	// Query all releases
+	for {
+		err := c.query(ctx, &queryReleases, variablesReleases)
+		if err != nil {
+			return nil, err
+		}
+
+		res := queryReleases.Repository.Releases.Nodes
+
+		if len(res) == 0 {
+			break
+		}
+
+		for _, rel := range res {
+			releaseDate := rel.PublishedAt
+			if releaseDate.IsZero() {
+				releaseDate = rel.CreatedAt
+			}
+
+			releaseInfo := stats.ReleaseInfo{
+				CreatedAt:     rel.CreatedAt,
+				PublishedAt:   releaseDate,
+				Name:          rel.Name,
+				TagName:       rel.TagName,
+				Description:   rel.Description,
+				IsPrerelease:  rel.IsPrerelease,
+				IsDraft:       rel.IsDraft,
+				URL:           rel.URL,
+				AuthorLogin:   rel.Author.Login,
+				TotalReleases: runningTotal,
+			}
+			
+			result = append(result, releaseInfo)
+			runningTotal--
+		}
+
+		if !queryReleases.Repository.Releases.PageInfo.HasNextPage {
+			break
+		}
+
+		variablesReleases["releasesCursor"] = githubv4.NewString(queryReleases.Repository.Releases.PageInfo.EndCursor)
+	}
+	
+	// Sort by date, newest first (they should already be sorted this way from the API)
+	slices.SortFunc(result, func(a, b stats.ReleaseInfo) int {
+		// Compare PublishedAt dates (newest first)
+		if a.PublishedAt.After(b.PublishedAt) {
+			return -1
+		}
+		if b.PublishedAt.After(a.PublishedAt) {
+			return 1
+		}
+		return 0
+	})
+	
+	return result, nil
+}
+

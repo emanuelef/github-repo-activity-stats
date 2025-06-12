@@ -81,6 +81,15 @@ func main() {
 	allContributors, _ := clientGQL.GetNewContributorsHistory(ctx, "temporalio/temporal", nil)
 	fmt.Println(time.Time(allContributors[len(allContributors)-1].Day))
 
+	// Test our new releases feed function
+	allReleasesFeed, _ := clientGQL.GetAllReleasesFeed(ctx, "kubernetes/kubernetes")
+	if len(allReleasesFeed) > 0 {
+		fmt.Println("Latest release date:", allReleasesFeed[0].PublishedAt)
+		fmt.Println("Total releases:", allReleasesFeed[0].TotalReleases)
+		fmt.Println("Latest release name:", allReleasesFeed[0].Name)
+		fmt.Println("Latest release tag:", allReleasesFeed[0].TagName)
+	}
+
 	//
 	result, _ = clientGQL.GetAllStats(ctx, "kubewarden/kubewarden-controller")
 	fmt.Println(result)
