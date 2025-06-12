@@ -1641,7 +1641,6 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 		PublishedAt   time.Time
 		Name          string
 		TagName       string
-		Description   string
 		IsPrerelease  bool
 		IsDraft       bool
 		URL           string
@@ -1672,13 +1671,13 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 	if err != nil {
 		return nil, err
 	}
-	
+
 	totalReleases = queryReleases.Repository.Releases.TotalCount
 	runningTotal = totalReleases
 
 	// Reset for full query loop
 	variablesReleases["releasesCursor"] = (*githubv4.String)(nil)
-	
+
 	// Query all releases
 	for {
 		err := c.query(ctx, &queryReleases, variablesReleases)
@@ -1703,14 +1702,13 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 				PublishedAt:   releaseDate,
 				Name:          rel.Name,
 				TagName:       rel.TagName,
-				Description:   rel.Description,
 				IsPrerelease:  rel.IsPrerelease,
 				IsDraft:       rel.IsDraft,
 				URL:           rel.URL,
 				AuthorLogin:   rel.Author.Login,
 				TotalReleases: runningTotal,
 			}
-			
+
 			result = append(result, releaseInfo)
 			runningTotal--
 		}
@@ -1721,7 +1719,7 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 
 		variablesReleases["releasesCursor"] = githubv4.NewString(queryReleases.Repository.Releases.PageInfo.EndCursor)
 	}
-	
+
 	// Sort by date, newest first (they should already be sorted this way from the API)
 	slices.SortFunc(result, func(a, b stats.ReleaseInfo) int {
 		// Compare PublishedAt dates (newest first)
@@ -1733,7 +1731,6 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 		}
 		return 0
 	})
-	
+
 	return result, nil
 }
-

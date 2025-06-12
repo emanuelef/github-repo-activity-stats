@@ -95,7 +95,6 @@ type ReleaseInfo struct {
 	PublishedAt   time.Time `json:"publishedAt"`
 	Name          string    `json:"name"`
 	TagName       string    `json:"tagName"`
-	Description   string    `json:"description"`
 	IsPrerelease  bool      `json:"isPrerelease"`
 	IsDraft       bool      `json:"isDraft"`
 	URL           string    `json:"url"`
