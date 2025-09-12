@@ -1734,3 +1734,127 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 
 	return result, nil
 }
+
+// GetTopStargazersByFollowers returns users who starred a repo, sorted by their follower count
+// This implementation fetches the most recent stars (up to 5000) and returns the top users by follower count
+func (c *ClientGQL) GetTopStargazersByFollowers(ctx context.Context, ghRepo string, limit int) ([]stats.StargazerInfo, error) {
+	repoSplit := strings.Split(ghRepo, "/")
+	if len(repoSplit) != 2 || !strings.Contains(ghRepo, "/") {
+		return nil, fmt.Errorf("repo should be provided as owner/name")
+	}
+
+	owner := repoSplit[0]
+	name := repoSplit[1]
+
+	var allStargazers []stats.StargazerInfo
+	processedUsers := make(map[string]struct{})
+
+	// GraphQL query to get stargazers with follower counts
+	variables := map[string]any{
+		"owner":       githubv4.String(owner),
+		"name":        githubv4.String(name),
+		"starsCursor": (*githubv4.String)(nil),
+	}
+
+	type stargazerUser struct {
+		Login     string
+		Followers struct {
+			TotalCount int
+		}
+		URL       string
+		AvatarURL string `graphql:"avatarUrl"`
+	}
+
+	var query struct {
+		Repository struct {
+			Stargazers struct {
+				TotalCount int
+				Edges      []struct {
+					StarredAt time.Time
+					Node      stargazerUser
+				}
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"stargazers(first: 100, after: $starsCursor, orderBy: {field: STARRED_AT, direction: DESC})"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	// Set a higher page limit to fetch more stars (up to 5000)
+	// This is 50 pages of 100 results each
+	maxPages := 50
+	pageCount := 0
+	processedCount := 0
+	maxStars := 5000
+
+	fmt.Printf("Fetching up to %d recent stargazers for %s...\n", maxStars, ghRepo)
+
+	for pageCount < maxPages && processedCount < maxStars {
+		err := c.query(ctx, &query, variables)
+		if err != nil {
+			return nil, err
+		}
+
+		edges := query.Repository.Stargazers.Edges
+		if len(edges) == 0 {
+			break
+		}
+
+		for _, edge := range edges {
+			login := edge.Node.Login
+			if _, exists := processedUsers[login]; !exists {
+				processedUsers[login] = struct{}{}
+
+				stargazer := stats.StargazerInfo{
+					Login:         login,
+					FollowerCount: edge.Node.Followers.TotalCount,
+					StarredAt:     edge.StarredAt,
+					AvatarURL:     edge.Node.AvatarURL,
+					URL:           edge.Node.URL,
+				}
+
+				allStargazers = append(allStargazers, stargazer)
+				processedCount++
+
+				if processedCount >= maxStars {
+					break
+				}
+			}
+		}
+
+		if !query.Repository.Stargazers.PageInfo.HasNextPage {
+			break
+		}
+
+		variables["starsCursor"] = githubv4.NewString(query.Repository.Stargazers.PageInfo.EndCursor)
+		pageCount++
+
+		// Print progress update every 10 pages
+		if pageCount%10 == 0 {
+			fmt.Printf("Processed %d pages, found %d unique stargazers so far...\n", pageCount, len(allStargazers))
+		}
+	}
+
+	// Sort by follower count in descending order
+	slices.SortFunc(allStargazers, func(a, b stats.StargazerInfo) int {
+		if a.FollowerCount > b.FollowerCount {
+			return -1
+		}
+		if a.FollowerCount < b.FollowerCount {
+			return 1
+		}
+		return 0
+	})
+
+	// Print summary
+	fmt.Printf("Completed fetching stargazers. Processed %d pages, found %d unique stargazers.\n",
+		pageCount, len(allStargazers))
+
+	// Limit results if requested
+	if limit > 0 && len(allStargazers) > limit {
+		return allStargazers[:limit], nil
+	}
+
+	return allStargazers, nil
+}

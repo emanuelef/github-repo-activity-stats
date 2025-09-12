@@ -89,6 +89,15 @@ func (t NewContributorsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.NewContributors, t.TotalNewContributors})
 }
 
+// StargazerInfo represents a GitHub user who starred a repository, along with their follower count
+type StargazerInfo struct {
+	Login         string    `json:"login"`
+	FollowerCount int       `json:"followerCount"`
+	StarredAt     time.Time `json:"starredAt"`
+	AvatarURL     string    `json:"avatarURL"`
+	URL           string    `json:"url"`
+}
+
 // ReleaseInfo represents a single GitHub release with its metadata
 type ReleaseInfo struct {
 	CreatedAt     time.Time `json:"createdAt"`

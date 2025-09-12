@@ -60,6 +60,18 @@ func main() {
 
 	ctx := context.Background()
 
+	// Get top stargazers by followers for daily-stars-explorer
+	fmt.Println("\nTop 10 stargazers by followers for metalbear-co/mirrord:")
+	topStargazers, err := clientGQL.GetTopStargazersByFollowers(ctx, "metalbear-co/mirrord", 10)
+	if err != nil {
+		fmt.Printf("Error getting top stargazers: %v\n", err)
+	} else {
+		for i, user := range topStargazers {
+			fmt.Printf("%d. %s - %d followers (starred at %s)\n",
+				i+1, user.Login, user.FollowerCount, user.StarredAt.Format("2006-01-02"))
+		}
+	}
+
 	resultRecent, _ := clientGQL.GetRecentStarsHistoryTwoWays(ctx, "langflow-ai/langflow", 10, nil)
 	for _, val := range resultRecent {
 		fmt.Println("Date:", time.Time(val.Day), "Stars:", val.Stars, "Total Stars:", val.TotalStars)
