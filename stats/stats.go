@@ -24,6 +24,12 @@ type StarsPerDay struct {
 	TotalStars int
 }
 
+type StarsPerHour struct {
+	Hour       time.Time `json:"hour"`
+	Stars      int       `json:"stars"`
+	TotalStars int       `json:"totalStars"`
+}
+
 type CommitsPerDay struct {
 	Day          JSONDay
 	Commits      int
