@@ -95,6 +95,17 @@ func (t NewContributorsPerDay) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]any{t.Day, t.NewContributors, t.TotalNewContributors})
 }
 
+// NewReposPerDay holds statistics about newly created public repositories on GitHub for a specific day.
+type NewReposPerDay struct {
+	Day       JSONDay
+	Count     int
+	TotalSeen int // Cumulative total of repos created from the start of the period
+}
+
+func (t NewReposPerDay) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Day, t.Count, t.TotalSeen})
+}
+
 // ReleaseInfo represents a single GitHub release with its metadata
 type ReleaseInfo struct {
 	CreatedAt     time.Time `json:"createdAt"`

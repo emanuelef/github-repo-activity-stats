@@ -1845,3 +1845,89 @@ func (c *ClientGQL) GetAllReleasesFeed(ctx context.Context, ghRepo string) ([]st
 
 	return result, nil
 }
+
+// GetNewReposCountHistory fetches the daily count of newly created public repositories on GitHub
+// for the specified date range. Uses GitHub's GraphQL search API to query repository counts.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - startDate: The start date for the query (inclusive)
+//   - endDate: The end date for the query (inclusive)
+//   - includeForks: If true, includes forked repositories in the count
+//   - updateChannel: Optional channel to receive progress updates (number of days processed)
+//
+// Returns a slice of NewReposPerDay with daily counts and cumulative totals.
+func (c *ClientGQL) GetNewReposCountHistory(ctx context.Context, startDate, endDate time.Time, includeForks bool, updateChannel chan<- int) ([]stats.NewReposPerDay, error) {
+	ctx, span := tracer.Start(ctx, "fetch-new-repos-count-history")
+	defer span.End()
+
+	// Normalize dates to UTC midnight
+	startDate = startDate.UTC().Truncate(24 * time.Hour)
+	endDate = endDate.UTC().Truncate(24 * time.Hour)
+
+	// Calculate number of days
+	diff := endDate.Sub(startDate)
+	days := int(diff.Hours()/24) + 1
+
+	if days <= 0 {
+		return nil, fmt.Errorf("end date must be after or equal to start date")
+	}
+
+	result := make([]stats.NewReposPerDay, 0, days)
+	runningTotal := 0
+
+	// Query for each day
+	for i := 0; i < days; i++ {
+		currentDay := startDate.AddDate(0, 0, i)
+		dateStr := currentDay.Format("2006-01-02")
+
+		// Build the search query
+		// Format: created:YYYY-MM-DD..YYYY-MM-DD is:public
+		query := fmt.Sprintf("created:%s..%s is:public", dateStr, dateStr)
+		if !includeForks {
+			query += " fork:false"
+		}
+
+		// Define the GraphQL query structure
+		var searchQuery struct {
+			Search struct {
+				RepositoryCount int
+			} `graphql:"search(type: REPOSITORY, query: $q)"`
+		}
+
+		variables := map[string]any{
+			"q": githubv4.String(query),
+		}
+
+		// Execute the query
+		err := c.query(ctx, &searchQuery, variables)
+		if err != nil {
+			return nil, fmt.Errorf("error querying repos for %s: %w", dateStr, err)
+		}
+
+		count := searchQuery.Search.RepositoryCount
+		runningTotal += count
+
+		result = append(result, stats.NewReposPerDay{
+			Day:       stats.JSONDay(currentDay),
+			Count:     count,
+			TotalSeen: runningTotal,
+		})
+
+		// Send progress update if channel is provided
+		if updateChannel != nil {
+			updateChannel <- i + 1
+		}
+
+		// Add a small delay to avoid rate limiting
+		if i < days-1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	if updateChannel != nil {
+		close(updateChannel)
+	}
+
+	return result, nil
+}
