@@ -121,6 +121,17 @@ func main() {
 		}
 	}
 
+	// Test new repos count history
+	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2025, 1, 31, 0, 0, 0, 0, time.UTC)
+	newRepos, _ := clientGQL.GetNewReposCountHistory(ctx, startDate, endDate, false, nil)
+	if len(newRepos) > 0 {
+		fmt.Println("\nNew Public Repos (excluding forks) - January 2025:")
+		fmt.Printf("First day (%s): %d repos\n", time.Time(newRepos[0].Day).Format("2006-01-02"), newRepos[0].Count)
+		fmt.Printf("Last day (%s): %d repos\n", time.Time(newRepos[len(newRepos)-1].Day).Format("2006-01-02"), newRepos[len(newRepos)-1].Count)
+		fmt.Printf("Total new repos in period: %d\n", newRepos[len(newRepos)-1].TotalSeen)
+	}
+
 	result, _ = clientGQL.GetAllStats(ctx, "dghubble/gologin")
 	fmt.Println(result)
 
