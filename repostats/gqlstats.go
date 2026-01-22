@@ -1921,7 +1921,7 @@ func (c *ClientGQL) GetNewReposCountHistory(ctx context.Context, startDate, endD
 
 		// Add a small delay to avoid rate limiting
 		if i < days-1 {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 
