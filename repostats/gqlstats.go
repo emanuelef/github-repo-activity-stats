@@ -724,8 +724,13 @@ func (c *ClientGQL) GetRecentStarsHistoryByHourRange(ctx context.Context, ghRepo
 	startDate := startTime.UTC().Truncate(time.Hour)
 	currentTime := endTime.UTC().Truncate(time.Hour)
 
+	// If they're the same hour, add 1 hour to endTime to get the partial current hour
+	if currentTime.Equal(startDate) {
+		currentTime = currentTime.Add(1 * time.Hour)
+	}
+
 	// Validate time range
-	if currentTime.Before(startDate) || currentTime.Equal(startDate) {
+	if currentTime.Before(startDate) {
 		return nil, fmt.Errorf("endTime must be after startTime")
 	}
 
