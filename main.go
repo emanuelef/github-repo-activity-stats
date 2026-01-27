@@ -65,6 +65,32 @@ func main() {
 		fmt.Println("Date:", time.Time(val.Day), "Stars:", val.Stars, "Total Stars:", val.TotalStars)
 	}
 
+	// Test new hourly range methods
+	fmt.Println("\n=== Testing Hourly Stars History ===")
+
+	// Test 1: Fetch last 5 hours only
+	fiveHoursAgo := time.Now().Add(-5 * time.Hour)
+	hourlyStars, _ := clientGQL.GetRecentStarsHistoryByHourSince(ctx, "langflow-ai/langflow", fiveHoursAgo, nil)
+	fmt.Printf("\nStars in last 5 hours (%d hours fetched):\n", len(hourlyStars))
+	for _, val := range hourlyStars {
+		fmt.Printf("Hour: %s, Stars: %d, Total: %d\n", val.Hour.Format("2006-01-02 15:04"), val.Stars, val.TotalStars)
+	}
+
+	// Test 2: Fetch specific time range (e.g., 10 hours starting from 12 hours ago)
+	startTime := time.Now().Add(-12 * time.Hour)
+	endTime := time.Now().Add(-2 * time.Hour)
+	hourlyStarsRange, _ := clientGQL.GetRecentStarsHistoryByHourRange(ctx, "langflow-ai/langflow", startTime, endTime, nil)
+	fmt.Printf("\nStars in custom range (%s to %s):\n", startTime.Format("2006-01-02 15:04"), endTime.Format("2006-01-02 15:04"))
+	totalInRange := 0
+	for _, val := range hourlyStarsRange {
+		totalInRange += val.Stars
+	}
+	fmt.Printf("Total hours: %d, Total stars in range: %d\n", len(hourlyStarsRange), totalInRange)
+
+	// Test 3: Compare day-based vs hour-based for last 2 days
+	hourlyStars2d, _ := clientGQL.GetRecentStarsHistoryByHour(ctx, "langflow-ai/langflow", 2, nil)
+	fmt.Printf("\nStars in last 2 days (hourly): %d hours of data\n", len(hourlyStars2d))
+
 	allCommits, defaultBranch, _ := clientGQL.GetAllCommitsHistory(ctx, "ceccopierangiolieugenio/pyTermTk", nil)
 	fmt.Println(time.Time(allCommits[len(allCommits)-1].Day))
 	fmt.Println(defaultBranch)
