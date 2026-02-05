@@ -36,3 +36,6 @@ cncf/stats.ipynb
 !/example/analysis-latest.csv
 !/example/dep-repo-latest.csv
 !all-stars-k8s.csv
+hourly-stars-test
+example-repo-mentions/repo-mentions.json
+example-repo-mentions-rest/repo-mentions-rest.json
