@@ -3,6 +3,7 @@ package repostats
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -36,19 +37,24 @@ type RepoMentionResult struct {
 // It searches in Issues, Pull Requests, and Discussions, sorted by most recent
 // Example: repo = "kubernetes/kubernetes"
 // Note: Results are sorted by creation date (most recent first)
+// By default, excludes mentions from repositories owned by the same owner as the target repo
 func (c *ClientGQL) GetRepoMentions(ctx context.Context, repo string, limit int) (*RepoMentionResult, error) {
-	return c.GetRepoMentionsWithTimeRange(ctx, repo, limit, nil, nil)
+	return c.GetRepoMentionsWithTimeRange(ctx, repo, limit, nil, nil, true)
 }
 
 // GetRepoMentionsWithTimeRange searches for mentions with optional time range filtering
 // startDate and endDate are optional (pass nil to ignore)
+// excludeSameOwner: if true, excludes mentions from repos owned by the same owner (default: true)
 // Results are sorted by creation date (most recent first)
 // Time format: "2024-01-01" or use time.Time
-// Example: GetRepoMentionsWithTimeRange(ctx, "kubernetes/kubernetes", 50, &startDate, &endDate)
-func (c *ClientGQL) GetRepoMentionsWithTimeRange(ctx context.Context, repo string, limit int, startDate, endDate *time.Time) (*RepoMentionResult, error) {
+// Example: GetRepoMentionsWithTimeRange(ctx, "kubernetes/kubernetes", 50, &startDate, &endDate, true)
+func (c *ClientGQL) GetRepoMentionsWithTimeRange(ctx context.Context, repo string, limit int, startDate, endDate *time.Time, excludeSameOwner bool) (*RepoMentionResult, error) {
 	if limit <= 0 {
 		limit = 100
 	}
+
+	// Extract owner from repo string (e.g., "kubernetes" from "kubernetes/kubernetes")
+	owner := extractOwner(repo)
 
 	// Build date range string for query
 	dateRange := ""
@@ -69,6 +75,9 @@ func (c *ClientGQL) GetRepoMentionsWithTimeRange(ctx context.Context, repo strin
 	if err != nil {
 		return nil, fmt.Errorf("error searching issues: %w", err)
 	}
+	if excludeSameOwner {
+		issues = filterByOwner(issues, owner)
+	}
 	result.Mentions = append(result.Mentions, issues...)
 	result.IssuesCount = len(issues)
 
@@ -77,6 +86,9 @@ func (c *ClientGQL) GetRepoMentionsWithTimeRange(ctx context.Context, repo strin
 	if err != nil {
 		return nil, fmt.Errorf("error searching pull requests: %w", err)
 	}
+	if excludeSameOwner {
+		prs = filterByOwner(prs, owner)
+	}
 	result.Mentions = append(result.Mentions, prs...)
 	result.PullRequestsCount = len(prs)
 
@@ -84,6 +96,9 @@ func (c *ClientGQL) GetRepoMentionsWithTimeRange(ctx context.Context, repo strin
 	discussions, err := c.searchDiscussions(ctx, repo, limit, dateRange)
 	if err != nil {
 		return nil, fmt.Errorf("error searching discussions: %w", err)
+	}
+	if excludeSameOwner {
+		discussions = filterByOwner(discussions, owner)
 	}
 	result.Mentions = append(result.Mentions, discussions...)
 	result.DiscussionsCount = len(discussions)
@@ -334,4 +349,29 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// extractOwner extracts the owner from a repo string (e.g., "kubernetes" from "kubernetes/kubernetes")
+func extractOwner(repo string) string {
+	parts := strings.Split(repo, "/")
+	if len(parts) > 0 {
+		return parts[0]
+	}
+	return ""
+}
+
+// filterByOwner filters out mentions from repositories with the given owner
+func filterByOwner(mentions []RepoMention, excludeOwner string) []RepoMention {
+	if excludeOwner == "" {
+		return mentions
+	}
+
+	filtered := make([]RepoMention, 0, len(mentions))
+	for _, mention := range mentions {
+		repoOwner := extractOwner(mention.Repository)
+		if repoOwner != excludeOwner {
+			filtered = append(filtered, mention)
+		}
+	}
+	return filtered
 }

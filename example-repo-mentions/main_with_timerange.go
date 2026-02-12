@@ -34,8 +34,8 @@ func exampleWithTimeRange() {
 	fmt.Printf("Searching for mentions of %s in the last 30 days...\n", targetRepo)
 	fmt.Printf("Date range: %s to %s\n\n", startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
 
-	// Get all mentions with time range
-	result, err := client.GetRepoMentionsWithTimeRange(context.Background(), targetRepo, limit, &startDate, &endDate)
+	// Get all mentions with time range (excludeSameOwner=true to filter out mentions from repos with the same owner)
+	result, err := client.GetRepoMentionsWithTimeRange(context.Background(), targetRepo, limit, &startDate, &endDate, true)
 	if err != nil {
 		log.Fatalf("Error getting repo mentions: %v", err)
 	}
@@ -102,8 +102,8 @@ func exampleCustomDateRange() {
 	fmt.Printf("\n\n=== Custom Date Range Example ===\n")
 	fmt.Printf("Searching for mentions of %s in January 2024...\n", targetRepo)
 
-	// Get all mentions with time range
-	result, err := client.GetRepoMentionsWithTimeRange(context.Background(), targetRepo, limit, &startDate, &endDate)
+	// Get all mentions with time range (excludeSameOwner=true to filter out mentions from repos with the same owner)
+	result, err := client.GetRepoMentionsWithTimeRange(context.Background(), targetRepo, limit, &startDate, &endDate, true)
 	if err != nil {
 		log.Fatalf("Error getting repo mentions: %v", err)
 	}

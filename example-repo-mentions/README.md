@@ -84,6 +84,7 @@ result, err := client.GetRepoMentionsWithTimeRange(
     50,
     &startDate,  // optional: pass nil for no start limit
     &endDate,    // optional: pass nil for no end limit
+    true,        // excludeSameOwner: filter out mentions from repos with same owner (default: true)
 )
 
 // Or custom date range
@@ -96,6 +97,7 @@ result, err := client.GetRepoMentionsWithTimeRange(
     100,
     &startDate,
     &endDate,
+    true,  // excludeSameOwner: set to false to include mentions from same owner's repos
 )
 ```
 
@@ -343,11 +345,11 @@ endDate := time.Date(2024, 1, 31, 23, 59, 59, 0, time.UTC)
 
 // Since a specific date (no end date)
 startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-result, _ := client.GetRepoMentionsWithTimeRange(ctx, repo, 100, &startDate, nil)
+result, _ := client.GetRepoMentionsWithTimeRange(ctx, repo, 100, &startDate, nil, true)
 
 // Until a specific date (no start date)
 endDate := time.Date(2024, 6, 30, 23, 59, 59, 0, time.UTC)
-result, _ := client.GetRepoMentionsWithTimeRange(ctx, repo, 100, nil, &endDate)
+result, _ := client.GetRepoMentionsWithTimeRange(ctx, repo, 100, nil, &endDate, true)
 ```
 
 ## Limitations
