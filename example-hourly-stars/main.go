@@ -29,7 +29,7 @@ func main() {
 		fmt.Printf("Error: %v\n", err)
 	} else {
 		fmt.Printf("Total hours tracked: %d\n", len(hourlyStars7d))
-		
+
 		// Show first few hours
 		fmt.Println("\nFirst 5 hours:")
 		for i := 0; i < 5 && i < len(hourlyStars7d); i++ {
@@ -72,7 +72,7 @@ func main() {
 		fmt.Printf("Error: %v\n", err)
 	} else {
 		fmt.Printf("Total hours tracked: %d\n", len(hourlyStars3d))
-		
+
 		// Group by day and show daily totals
 		dayTotals := make(map[string]int)
 		for _, h := range hourlyStars3d {
@@ -92,7 +92,7 @@ func main() {
 
 	// Example 3: Compare daily vs hourly granularity
 	fmt.Println("\n=== Example 3: Comparing daily vs hourly data (last 2 days) ===")
-	
+
 	// Get daily data
 	dailyStars, err := clientGQL.GetRecentStarsHistoryTwoWays(ctx, "langflow-ai/langflow", 2, nil)
 	if err != nil {
@@ -116,7 +116,7 @@ func main() {
 
 		fmt.Printf("\nHourly data provides %d data points vs %d daily data points\n",
 			len(hourlyStars2d), len(dailyStars))
-		
+
 		// Show hours with most activity
 		fmt.Println("\nTop 5 most active hours in last 2 days:")
 		type hourStat struct {
@@ -129,7 +129,7 @@ func main() {
 				topHours = append(topHours, hourStat{h.Hour, h.Stars})
 			}
 		}
-		
+
 		// Simple bubble sort for top 5
 		for i := 0; i < len(topHours); i++ {
 			for j := i + 1; j < len(topHours); j++ {

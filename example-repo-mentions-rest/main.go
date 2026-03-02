@@ -86,7 +86,7 @@ func main() {
 	}
 
 	outputFile := "repo-mentions-rest.json"
-	err = os.WriteFile(outputFile, jsonData, 0644)
+	err = os.WriteFile(outputFile, jsonData, 0o644)
 	if err != nil {
 		log.Fatalf("Error writing to file: %v", err)
 	}

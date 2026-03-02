@@ -123,7 +123,6 @@ func (c *Client) searchGitHubREST(query string, limit int, itemType string) ([]R
 			"order":    "desc",
 		}).
 		Get(fmt.Sprintf("%s/search/issues", apiGHUrl))
-
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +196,6 @@ func (c *Client) GetRepoMentionsSummaryREST(repo string) (map[string]int, error)
 				"per_page": "1",
 			}).
 			Get(fmt.Sprintf("%s/search/issues", apiGHUrl))
-
 		if err != nil {
 			return nil, err
 		}
