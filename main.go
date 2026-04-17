@@ -147,15 +147,24 @@ func main() {
 		}
 	}
 
-	// Test new repos count history
-	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2025, 1, 31, 0, 0, 0, 0, time.UTC)
-	newRepos, _ := clientGQL.GetNewReposCountHistory(ctx, startDate, endDate, false, nil)
-	if len(newRepos) > 0 {
-		fmt.Println("\nNew Public Repos (excluding forks) - January 2025:")
-		fmt.Printf("First day (%s): %d repos\n", time.Time(newRepos[0].Day).Format("2006-01-02"), newRepos[0].Count)
-		fmt.Printf("Last day (%s): %d repos\n", time.Time(newRepos[len(newRepos)-1].Day).Format("2006-01-02"), newRepos[len(newRepos)-1].Count)
-		fmt.Printf("Total new repos in period: %d\n", newRepos[len(newRepos)-1].TotalSeen)
+	// Compare repos count with and without forks for yesterday
+	yesterday := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, -1)
+	fmt.Println("\n=== New Repos Count Comparison (yesterday) ===")
+	fmt.Printf("Date: %s\n", yesterday.Format("2006-01-02"))
+
+	newReposNoForks, _ := clientGQL.GetNewReposCountHistory(ctx, yesterday, yesterday, false, nil)
+	if len(newReposNoForks) > 0 {
+		fmt.Printf("Without forks: %d repos\n", newReposNoForks[0].Count)
+	}
+
+	newReposWithForks, _ := clientGQL.GetNewReposCountHistory(ctx, yesterday, yesterday, true, nil)
+	if len(newReposWithForks) > 0 {
+		fmt.Printf("With forks:    %d repos\n", newReposWithForks[0].Count)
+	}
+
+	if len(newReposNoForks) > 0 && len(newReposWithForks) > 0 {
+		diff := newReposWithForks[0].Count - newReposNoForks[0].Count
+		fmt.Printf("Difference (forks only): %d repos\n", diff)
 	}
 
 	result, _ = clientGQL.GetAllStats(ctx, "dghubble/gologin")

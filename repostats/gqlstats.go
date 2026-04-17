@@ -2112,9 +2112,10 @@ func (c *ClientGQL) GetNewReposCountHistory(ctx context.Context, startDate, endD
 
 		// Build the search query
 		// Format: created:YYYY-MM-DD..YYYY-MM-DD is:public
+		// Note: GitHub search excludes forks by default, so we need fork:true to include them
 		query := fmt.Sprintf("created:%s..%s is:public", dateStr, dateStr)
-		if !includeForks {
-			query += " fork:false"
+		if includeForks {
+			query += " fork:true"
 		}
 
 		// Define the GraphQL query structure
